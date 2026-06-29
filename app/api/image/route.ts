@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       model: "gpt-image-1",
       prompt,
       size: "1024x1024",
-      quality: "low",
+      quality: "medium",
       n: 1,
     });
 
