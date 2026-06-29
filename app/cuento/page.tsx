@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CuentoParseado, EstiloId, FormData } from "@/types/cuento";
 import { parsearCuento } from "@/lib/prompts";
@@ -16,6 +16,15 @@ export default function CuentoPage() {
   const router = useRouter();
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [vacio, setVacio] = useState(false);
+  const [listas, setListas] = useState(0);
+  const [totalImgs, setTotalImgs] = useState(0);
+
+  const onProgreso = useCallback((l: number, t: number) => {
+    setListas(l);
+    setTotalImgs(t);
+  }, []);
+
+  const todasListas = totalImgs > 0 && listas >= totalImgs;
 
   useEffect(() => {
     const raw = sessionStorage.getItem("cuentomagico:resultado");
@@ -64,7 +73,7 @@ export default function CuentoPage() {
   return (
     <div className="min-h-screen bg-[#FFF9F0]">
       <header
-        className="px-4 py-6 text-center text-white"
+        className="no-print px-4 py-6 text-center text-white"
         style={{ background: "linear-gradient(135deg, #FFD93D, #FF6B35)" }}
       >
         <h1 className="text-2xl font-extrabold drop-shadow-sm">
@@ -72,21 +81,32 @@ export default function CuentoPage() {
         </h1>
       </header>
 
-      <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-6">
+      <main className="mx-auto w-full max-w-xl px-4 pb-40 pt-6">
         <CuentoViewer
           cuento={resultado.cuento}
           nombre={resultado.nombre}
           estilo={resultado.estilo}
+          onProgreso={onProgreso}
         />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 border-t border-[#F0E6DA] bg-white/95 px-4 py-3 backdrop-blur">
-        <div className="mx-auto w-full max-w-xl">
+      <nav className="no-print fixed bottom-0 left-0 right-0 border-t border-[#F0E6DA] bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            disabled={!todasListas}
+            className="w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #9B5DE5, #00BBF9)" }}
+          >
+            {todasListas
+              ? "📄 Descargar PDF / Imprimir"
+              : `Preparando ilustraciones... (${listas}/${totalImgs || "…"})`}
+          </button>
           <button
             type="button"
             onClick={() => router.push("/crear")}
-            className="w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white"
-            style={{ background: "linear-gradient(135deg, #FFD93D, #FF6B35, #FF6B9D)" }}
+            className="w-full rounded-2xl border-2 border-[#E8E0F0] bg-white px-5 py-3 text-sm font-extrabold text-[#9B5DE5]"
           >
             ✨ Crear otro cuento
           </button>

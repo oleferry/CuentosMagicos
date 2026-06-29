@@ -35,3 +35,40 @@ body {
 .cm-dot {
   animation: cm-bounce 1.4s infinite ease-in-out both;
 }
+
+/* --- Impresión / descarga en PDF --- */
+@page {
+  margin: 1.4cm;
+}
+
+@media print {
+  /* Conserva los colores e ilustraciones al imprimir. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Oculta cabeceras, navegación y cualquier elemento no imprimible. */
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  /* Cada escena ocupa su propia página. */
+  .cm-print-page {
+    break-inside: avoid;
+    break-after: page;
+    box-shadow: none !important;
+  }
+
+  .cm-print-page:last-child {
+    break-after: auto;
+  }
+}

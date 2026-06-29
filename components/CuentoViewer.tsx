@@ -7,23 +7,47 @@ import type { CuentoParseado, EstiloId, ParteCuento } from "@/types/cuento";
 // Colores que rotan en el borde izquierdo de cada parte.
 const BORDES = ["#9B5DE5", "#FF6B9D", "#00BBF9", "#FF6B35"];
 
+type EstadoImagen = "cargando" | "ok" | "error";
+
 interface CuentoViewerProps {
   cuento: CuentoParseado;
   nombre?: string;
   estilo?: EstiloId | null;
+  // Informa cuántas ilustraciones han terminado (ok o error) del total.
+  onProgreso?: (listas: number, total: number) => void;
 }
 
 export default function CuentoViewer({
   cuento,
   nombre,
   estilo,
+  onProgreso,
 }: CuentoViewerProps) {
+  const total = cuento.partes.length;
+  const [estados, setEstados] = useState<EstadoImagen[]>(() =>
+    Array(total).fill("cargando"),
+  );
+
+  const setEstadoEn = useCallback((i: number, e: EstadoImagen) => {
+    setEstados((prev) => {
+      if (prev[i] === e) return prev;
+      const next = [...prev];
+      next[i] = e;
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const listas = estados.filter((e) => e === "ok" || e === "error").length;
+    onProgreso?.(listas, total);
+  }, [estados, total, onProgreso]);
+
   return (
     <div className="space-y-5">
       {cuento.partes.map((parte, i) => (
         <article
           key={i}
-          className="rounded-2xl border-l-8 bg-white p-5 shadow-sm"
+          className="cm-print-page rounded-2xl border-l-8 bg-white p-5 shadow-sm"
           style={{ borderLeftColor: BORDES[i % BORDES.length] }}
         >
           <h3 className="mb-3 text-lg font-extrabold text-[#3a2c4d]">
@@ -34,6 +58,7 @@ export default function CuentoViewer({
             parte={parte}
             nombre={nombre ?? ""}
             estilo={estilo ?? null}
+            onEstado={(e) => setEstadoEn(i, e)}
           />
 
           {parte.texto.split(/\n+/).map((parrafo, j) => (
@@ -46,7 +71,7 @@ export default function CuentoViewer({
 
       {cuento.aprendimos && (
         <article
-          className="rounded-2xl border-2 p-5"
+          className="cm-print-page rounded-2xl border-2 p-5"
           style={{ backgroundColor: "#FFF9E6", borderColor: "#FFD93D" }}
         >
           <h3 className="mb-2 text-lg font-extrabold text-[#3a2c4d]">
@@ -69,22 +94,29 @@ export default function CuentoViewer({
   );
 }
 
-type EstadoImagen = "cargando" | "ok" | "error";
-
 interface IlustracionProps {
   parte: ParteCuento;
   nombre: string;
   estilo: EstiloId | null;
+  onEstado?: (estado: EstadoImagen) => void;
 }
 
-function Ilustracion({ parte, nombre, estilo }: IlustracionProps) {
+function Ilustracion({ parte, nombre, estilo, onEstado }: IlustracionProps) {
   const [estado, setEstado] = useState<EstadoImagen>("cargando");
   const [src, setSrc] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string>("");
   const yaPedida = useRef(false);
 
+  // Reportamos el estado al padre sin meterlo en deps (evita bucles de render).
+  const onEstadoRef = useRef(onEstado);
+  onEstadoRef.current = onEstado;
+  const reportar = (e: EstadoImagen) => {
+    setEstado(e);
+    onEstadoRef.current?.(e);
+  };
+
   const generar = useCallback(async () => {
-    setEstado("cargando");
+    reportar("cargando");
     setMensaje("");
     try {
       const res = await fetch("/api/image", {
@@ -100,13 +132,14 @@ function Ilustracion({ parte, nombre, estilo }: IlustracionProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "No se pudo generar la imagen.");
       setSrc(data.image);
-      setEstado("ok");
+      reportar("ok");
     } catch (err) {
       setMensaje(
         err instanceof Error ? err.message : "No se pudo generar la imagen.",
       );
-      setEstado("error");
+      reportar("error");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parte.titulo, parte.texto, nombre, estilo]);
 
   // Solo una petición por montaje (evita duplicados en re-renders).
@@ -132,11 +165,8 @@ function Ilustracion({ parte, nombre, estilo }: IlustracionProps) {
         <span className="text-xs font-semibold text-[#FF6B35]">{mensaje}</span>
         <button
           type="button"
-          onClick={() => {
-            yaPedida.current = true;
-            generar();
-          }}
-          className="rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-bold text-white"
+          onClick={() => generar()}
+          className="no-print rounded-full bg-[#FF6B35] px-4 py-1.5 text-xs font-bold text-white"
         >
           Reintentar
         </button>
