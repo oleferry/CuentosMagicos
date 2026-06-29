@@ -99,15 +99,15 @@ export const ESTILOS: EstiloOpcion[] = [
 
 export function nivelPorEdad(edad: Edad): string {
   if (edad <= 4) {
-    return "muy sencillo: frases de 5-7 palabras, vocabulario básico, 150-200 palabras totales";
+    return "muy sencillo: frases de 5-7 palabras, vocabulario básico, 300-400 palabras totales";
   }
   if (edad <= 6) {
-    return "sencillo: frases cortas, vocabulario cotidiano, 250-320 palabras totales";
+    return "sencillo: frases cortas, vocabulario cotidiano, 500-640 palabras totales";
   }
   if (edad <= 8) {
-    return "fluido: frases medias, algo de vocabulario nuevo, 380-450 palabras totales";
+    return "fluido: frases medias, algo de vocabulario nuevo, 760-900 palabras totales";
   }
-  return "rico: frases variadas, metáforas simples, vocabulario amplio, 480-560 palabras totales";
+  return "rico: frases variadas, metáforas simples, vocabulario amplio, 960-1120 palabras totales";
 }
 
 export function descripcionEstilo(id: EstiloId | null): string {
@@ -167,6 +167,8 @@ export function construirPrompt(form: FormData): string {
     "IMPORTANTE:",
     "- Integra mínimo 3 datos reales y verificables sobre el tema",
     "- Usa el nombre del protagonista frecuentemente",
+    "- Si se indican nombres de acompañantes, úsalos a menudo en la historia",
+    "- Cada parte debe ser extensa y detallada; respeta el número total de palabras indicado en NIVEL",
     "- Final feliz con aprendizaje claro",
     "- Adapta el lenguaje exactamente al nivel indicado",
   );
