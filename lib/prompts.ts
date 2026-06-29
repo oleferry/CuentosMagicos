@@ -176,6 +176,26 @@ export function construirPrompt(form: FormData): string {
   return lineas.join("\n");
 }
 
+// --- Prompt para generar la ilustración de una parte (fase 2) ---
+
+export function construirPromptImagen(
+  titulo: string,
+  texto: string,
+  nombre: string,
+  estilo: EstiloId | null,
+): string {
+  const desc = descripcionEstilo(estilo);
+  // Resumimos la escena para no mandar un prompt gigante al modelo de imagen.
+  const escena = texto.replace(/\s+/g, " ").trim().slice(0, 500);
+  return [
+    `Ilustración para un cuento infantil, estilo ${desc}.`,
+    `Protagonista: ${nombre || "un niño o niña"}.`,
+    `Escena: ${titulo}. ${escena}`,
+    "Imagen alegre, colorida y apropiada para niños pequeños.",
+    "Sin texto, sin letras ni palabras dentro de la imagen.",
+  ].join(" ");
+}
+
 // --- Parseo del cuento generado ---
 
 // Convierte el texto con formato [PARTE X: título] ... [LO QUE APRENDIMOS HOY] ...

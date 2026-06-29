@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CuentoParseado, FormData } from "@/types/cuento";
+import type { CuentoParseado, EstiloId, FormData } from "@/types/cuento";
 import { parsearCuento } from "@/lib/prompts";
 import CuentoViewer from "@/components/CuentoViewer";
 
 interface Resultado {
   cuento: CuentoParseado;
   nombre: string;
+  estilo: EstiloId | null;
 }
 
 export default function CuentoPage() {
@@ -27,6 +28,7 @@ export default function CuentoPage() {
       setResultado({
         cuento: parsearCuento(data.cuento),
         nombre: data.form?.nombre ?? "",
+        estilo: data.form?.estilo ?? null,
       });
     } catch {
       setVacio(true);
@@ -71,7 +73,11 @@ export default function CuentoPage() {
       </header>
 
       <main className="mx-auto w-full max-w-xl px-4 pb-28 pt-6">
-        <CuentoViewer cuento={resultado.cuento} nombre={resultado.nombre} />
+        <CuentoViewer
+          cuento={resultado.cuento}
+          nombre={resultado.nombre}
+          estilo={resultado.estilo}
+        />
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 border-t border-[#F0E6DA] bg-white/95 px-4 py-3 backdrop-blur">
