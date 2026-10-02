@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 /* eslint-disable @next/next/no-img-element */
-import type { CuentoParseado, EstiloId, ParteCuento } from "@/types/cuento";
+import type {
+  CuentoParseado,
+  EstiloId,
+  ModoLectura,
+  ParteCuento,
+} from "@/types/cuento";
 
 // Colores que rotan en el borde izquierdo de cada parte.
 const BORDES = ["#9B5DE5", "#FF6B9D", "#00BBF9", "#FF6B35"];
@@ -11,19 +16,28 @@ type EstadoImagen = "cargando" | "ok" | "error";
 
 interface CuentoViewerProps {
   cuento: CuentoParseado;
+  cuentoId?: string;
   nombre?: string;
   estilo?: EstiloId | null;
+  modoLectura?: ModoLectura;
   // Informa cuántas ilustraciones han terminado (ok o error) del total.
   onProgreso?: (listas: number, total: number) => void;
 }
 
 export default function CuentoViewer({
   cuento,
+  cuentoId,
   nombre,
   estilo,
+  modoLectura,
   onProgreso,
 }: CuentoViewerProps) {
   const total = cuento.partes.length;
+  // En modo aprender, letra más grande: frases cortas, una por línea.
+  const claseTexto =
+    modoLectura === "aprender"
+      ? "mb-2 font-ligada text-2xl leading-[2.3] text-[#3a2c4d] last:mb-0"
+      : "mb-4 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0";
   const [estados, setEstados] = useState<EstadoImagen[]>(() =>
     Array(total).fill("cargando"),
   );
@@ -56,16 +70,15 @@ export default function CuentoViewer({
 
           <Ilustracion
             parte={parte}
+            cuentoId={cuentoId}
+            claveCache={cuentoId ? `cuentomagico:img:${cuentoId}:${i}` : null}
             nombre={nombre ?? ""}
             estilo={estilo ?? null}
             onEstado={(e) => setEstadoEn(i, e)}
           />
 
           {parte.texto.split(/\n+/).map((parrafo, j) => (
-            <p
-              key={j}
-              className="mb-4 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0"
-            >
+            <p key={j} className={claseTexto}>
               {parrafo}
             </p>
           ))}
@@ -81,10 +94,7 @@ export default function CuentoViewer({
             💡 Lo que aprendimos hoy
           </h3>
           {cuento.aprendimos.split(/\n+/).map((parrafo, j) => (
-            <p
-              key={j}
-              className="mb-3 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0"
-            >
+            <p key={j} className={claseTexto}>
               {parrafo}
             </p>
           ))}
@@ -102,12 +112,39 @@ export default function CuentoViewer({
 
 interface IlustracionProps {
   parte: ParteCuento;
+  cuentoId?: string;
+  claveCache: string | null; // dónde guardar la imagen para no regenerarla al recargar
   nombre: string;
   estilo: EstiloId | null;
   onEstado?: (estado: EstadoImagen) => void;
 }
 
-function Ilustracion({ parte, nombre, estilo, onEstado }: IlustracionProps) {
+function leerCache(clave: string | null): string | null {
+  if (!clave) return null;
+  try {
+    return sessionStorage.getItem(clave);
+  } catch {
+    return null;
+  }
+}
+
+function guardarCache(clave: string | null, imagen: string) {
+  if (!clave) return;
+  try {
+    sessionStorage.setItem(clave, imagen);
+  } catch {
+    // almacenamiento lleno: simplemente no se guarda
+  }
+}
+
+function Ilustracion({
+  parte,
+  cuentoId,
+  claveCache,
+  nombre,
+  estilo,
+  onEstado,
+}: IlustracionProps) {
   const [estado, setEstado] = useState<EstadoImagen>("cargando");
   const [src, setSrc] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<string>("");
@@ -129,6 +166,7 @@ function Ilustracion({ parte, nombre, estilo, onEstado }: IlustracionProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          cuentoId,
           titulo: parte.titulo,
           texto: parte.texto,
           nombre,
@@ -138,6 +176,7 @@ function Ilustracion({ parte, nombre, estilo, onEstado }: IlustracionProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "No se pudo generar la imagen.");
       setSrc(data.image);
+      guardarCache(claveCache, data.image);
       reportar("ok");
     } catch (err) {
       setMensaje(
@@ -146,14 +185,21 @@ function Ilustracion({ parte, nombre, estilo, onEstado }: IlustracionProps) {
       reportar("error");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parte.titulo, parte.texto, nombre, estilo]);
+  }, [cuentoId, claveCache, parte.titulo, parte.texto, nombre, estilo]);
 
-  // Solo una petición por montaje (evita duplicados en re-renders).
+  // Solo una petición por montaje; si ya estaba generada, se usa la guardada.
   useEffect(() => {
     if (yaPedida.current) return;
     yaPedida.current = true;
+    const guardada = leerCache(claveCache);
+    if (guardada) {
+      setSrc(guardada);
+      reportar("ok");
+      return;
+    }
     generar();
-  }, [generar]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generar, claveCache]);
 
   if (estado === "ok" && src) {
     return (

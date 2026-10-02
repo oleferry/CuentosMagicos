@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { construirPrompt, SYSTEM_PROMPT } from "@/lib/prompts";
+import { construirPrompt, parsearCuento, SYSTEM_PROMPT } from "@/lib/prompts";
+import { concederImagenes, reservarCuento } from "@/lib/servidor/acceso";
 import type { FormData } from "@/types/cuento";
 
 // Ejecuta siempre en el servidor; nunca expone la API key al cliente.
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -35,12 +37,22 @@ export async function POST(request: Request) {
     );
   }
 
+  // Comprueba los límites ANTES de gastar en la IA.
+  const reserva = await reservarCuento();
+  if (!reserva.ok) {
+    const status = reserva.motivo === "cerrado" ? 503 : 402;
+    return NextResponse.json(
+      { error: reserva.mensaje, motivo: reserva.motivo },
+      { status },
+    );
+  }
+
   const openai = new OpenAI({ apiKey });
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 3500,
+      max_tokens: form.modoLectura === "aprender" ? 1200 : 3500,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: construirPrompt(form) },
@@ -50,15 +62,20 @@ export async function POST(request: Request) {
     const cuento = completion.choices[0]?.message?.content?.trim() ?? "";
 
     if (!cuento) {
+      await reserva.liberar();
       return NextResponse.json(
         { error: "No se pudo generar el cuento. Inténtalo de nuevo." },
         { status: 502 },
       );
     }
 
-    return NextResponse.json({ cuento });
+    // Autoriza las ilustraciones de este cuento (una por parte + margen de reintentos).
+    const cuentoId = await concederImagenes(parsearCuento(cuento).partes.length);
+
+    return NextResponse.json({ cuento, cuentoId });
   } catch (err) {
     console.error("Error al generar el cuento:", err);
+    await reserva.liberar();
 
     if (err instanceof OpenAI.APIError && err.status === 429) {
       return NextResponse.json(

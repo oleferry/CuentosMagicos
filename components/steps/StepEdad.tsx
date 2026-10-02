@@ -1,7 +1,22 @@
 "use client";
 
-import type { Edad, FormData } from "@/types/cuento";
+import type { Edad, FormData, ModoLectura } from "@/types/cuento";
 import { EDADES } from "@/lib/prompts";
+
+const MODOS: { id: ModoLectura; emoji: string; titulo: string; texto: string }[] = [
+  {
+    id: "aprender",
+    emoji: "✏️",
+    titulo: "Lo lee el peque",
+    texto: "Aprender a leer: frases cortas en letra ligada",
+  },
+  {
+    id: "escuchar",
+    emoji: "👂",
+    titulo: "Se lo leemos",
+    texto: "Cuento más largo para escuchar",
+  },
+];
 
 interface StepProps {
   form: FormData;
@@ -35,6 +50,33 @@ export default function StepEdad({ form, update }: StepProps) {
               }}
             >
               {edad}
+            </button>
+          );
+        })}
+      </div>
+
+      <h3 className="mb-3 mt-8 text-base font-extrabold text-[#3a2c4d]">
+        ¿Quién va a leer el cuento?
+      </h3>
+      <div className="grid grid-cols-2 gap-3">
+        {MODOS.map((m) => {
+          const selected = form.modoLectura === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => update({ modoLectura: m.id })}
+              aria-pressed={selected}
+              className="flex flex-col items-start gap-1 rounded-2xl border-2 bg-white p-4 text-left transition-all"
+              style={{
+                borderColor: selected ? "#9B5DE5" : "#E8E0F0",
+                transform: selected ? "translateY(-2px)" : "none",
+                boxShadow: selected ? "0 6px 16px rgba(155,93,229,0.25)" : "none",
+              }}
+            >
+              <span className="text-2xl">{m.emoji}</span>
+              <span className="text-sm font-extrabold text-[#3a2c4d]">{m.titulo}</span>
+              <span className="text-xs leading-snug text-[#7a6b8a]">{m.texto}</span>
             </button>
           );
         })}

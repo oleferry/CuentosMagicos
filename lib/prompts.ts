@@ -128,9 +128,18 @@ function combinar(seleccionados: string[], libre: string): string {
 export const SYSTEM_PROMPT =
   "Eres un escritor experto en cuentos infantiles educativos en español.";
 
+// Nivel para un niño que está aprendiendo a leer solo (en letra ligada).
+const NIVEL_APRENDER =
+  "LECTOR PRINCIPIANTE que está aprendiendo a leer solo: frases muy cortas de 3 a 6 palabras, " +
+  "una sola idea por frase, cada frase en su propia línea. Palabras cortas y muy conocidas, " +
+  "preferiblemente con sílabas sencillas (consonante + vocal: ma, pe, lo, su). Evita palabras de más " +
+  "de 3 sílabas y grupos difíciles (tr, bl, pr, cl...) siempre que puedas. Repite las palabras clave. " +
+  "Entre 100 y 150 palabras en total (25-40 por parte)";
+
 export function construirPrompt(form: FormData): string {
   const edad = form.edad ?? 6;
-  const nivel = nivelPorEdad(edad as Edad);
+  const aprender = form.modoLectura === "aprender";
+  const nivel = aprender ? NIVEL_APRENDER : nivelPorEdad(edad as Edad);
   const estilo = descripcionEstilo(form.estilo);
 
   const acompanantes = combinar(form.secundarios, form.secundariosLibre);
@@ -165,12 +174,23 @@ export function construirPrompt(form: FormData): string {
     "resumen educativo",
     "",
     "IMPORTANTE:",
-    "- Integra mínimo 3 datos reales y verificables sobre el tema",
-    "- Usa el nombre del protagonista frecuentemente",
-    "- Si se indican nombres de acompañantes, úsalos a menudo en la historia",
-    "- Cada parte debe ser extensa y detallada; respeta el número total de palabras indicado en NIVEL",
-    "- Final feliz con aprendizaje claro",
-    "- Adapta el lenguaje exactamente al nivel indicado",
+    ...(aprender
+      ? [
+          "- Integra 2 datos reales y verificables sobre el tema, dichos de forma muy simple (ej.: «El sol es una estrella.»)",
+          "- Usa el nombre del protagonista frecuentemente",
+          "- Si se indican nombres de acompañantes, úsalos en la historia",
+          "- Es MUY importante respetar el límite de palabras y las frases cortas: es para que el niño lo lea solo",
+          "- En [LO QUE APRENDIMOS HOY] escribe solo 2 frases muy cortas",
+          "- Final feliz",
+        ]
+      : [
+          "- Integra mínimo 3 datos reales y verificables sobre el tema",
+          "- Usa el nombre del protagonista frecuentemente",
+          "- Si se indican nombres de acompañantes, úsalos a menudo en la historia",
+          "- Cada parte debe ser extensa y detallada; respeta el número total de palabras indicado en NIVEL",
+          "- Final feliz con aprendizaje claro",
+          "- Adapta el lenguaje exactamente al nivel indicado",
+        ]),
   );
 
   return lineas.join("\n");

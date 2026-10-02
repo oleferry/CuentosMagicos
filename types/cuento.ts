@@ -5,9 +5,13 @@ export type Edad = 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 // Clave de cada estilo de ilustración (afecta al prompt de imágenes en fase 2).
 export type EstiloId = "disney" | "comic" | "manga" | "acuarela";
 
+// "aprender": lo lee el niño (frases muy cortas). "escuchar": se lo lee un adulto.
+export type ModoLectura = "aprender" | "escuchar";
+
 export interface FormData {
   // Paso 1
   edad: Edad | null;
+  modoLectura: ModoLectura;
   // Paso 2
   nombre: string;
   fotoNombre: string | null; // fase 1: solo el nombre del archivo
@@ -27,6 +31,7 @@ export interface FormData {
 
 export const formDataInicial: FormData = {
   edad: null,
+  modoLectura: "aprender",
   nombre: "",
   fotoNombre: null,
   secundarios: [],
@@ -55,6 +60,7 @@ export type GenerarCuentoRequest = FormData;
 
 export interface GenerarCuentoResponse {
   cuento: string;
+  cuentoId: string; // autoriza las ilustraciones de este cuento
 }
 
 export interface ErrorResponse {

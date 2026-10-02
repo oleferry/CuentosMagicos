@@ -36,6 +36,29 @@ body {
   animation: cm-bounce 1.4s infinite ease-in-out both;
 }
 
+/* Cuadrados de colores del fondo de la portada. */
+@keyframes cm-parpadeo {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.cm-cuadro {
+  opacity: 0;
+  animation: cm-parpadeo 6.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-cuadro {
+    animation: none;
+    opacity: 0.15;
+  }
+}
+
 /* --- Impresión / descarga en PDF --- */
 @page {
   margin: 1.4cm;

@@ -2,14 +2,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CuentoParseado, EstiloId, FormData } from "@/types/cuento";
+import type {
+  CuentoParseado,
+  EstiloId,
+  FormData,
+  ModoLectura,
+} from "@/types/cuento";
 import { parsearCuento } from "@/lib/prompts";
 import CuentoViewer from "@/components/CuentoViewer";
 
 interface Resultado {
   cuento: CuentoParseado;
+  cuentoId?: string;
   nombre: string;
   estilo: EstiloId | null;
+  modoLectura: ModoLectura;
 }
 
 export default function CuentoPage() {
@@ -33,11 +40,17 @@ export default function CuentoPage() {
       return;
     }
     try {
-      const data = JSON.parse(raw) as { cuento: string; form: FormData };
+      const data = JSON.parse(raw) as {
+        cuento: string;
+        cuentoId?: string;
+        form: FormData;
+      };
       setResultado({
         cuento: parsearCuento(data.cuento),
+        cuentoId: data.cuentoId,
         nombre: data.form?.nombre ?? "",
         estilo: data.form?.estilo ?? null,
+        modoLectura: data.form?.modoLectura ?? "escuchar",
       });
     } catch {
       setVacio(true);
@@ -84,8 +97,10 @@ export default function CuentoPage() {
       <main className="mx-auto w-full max-w-xl px-4 pb-40 pt-6">
         <CuentoViewer
           cuento={resultado.cuento}
+          cuentoId={resultado.cuentoId}
           nombre={resultado.nombre}
           estilo={resultado.estilo}
+          modoLectura={resultado.modoLectura}
           onProgreso={onProgreso}
         />
       </main>

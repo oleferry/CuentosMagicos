@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FormData } from "@/types/cuento";
 import { formDataInicial } from "@/types/cuento";
+import EmailGate from "@/components/EmailGate";
 import ProgressBar from "@/components/ui/ProgressBar";
 import StepEdad from "@/components/steps/StepEdad";
 import StepNombre from "@/components/steps/StepNombre";
@@ -14,12 +16,33 @@ import StepTema from "@/components/steps/StepTema";
 
 const TOTAL_PASOS = 6;
 
+interface Cuota {
+  tipo: "familia" | "email" | "anonimo" | "cerrado";
+  restantes: number | null;
+}
+
 export default function Wizard() {
   const router = useRouter();
   const [form, setForm] = useState<FormData>(formDataInicial);
   const [paso, setPaso] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cuota, setCuota] = useState<Cuota | null>(null);
+  // Mensaje para pedir el email cuando se acaban los cuentos gratis sin registro.
+  const [pedirEmail, setPedirEmail] = useState<string | null>(null);
+
+  const refrescarCuota = useCallback(async () => {
+    try {
+      const res = await fetch("/api/quota", { cache: "no-store" });
+      if (res.ok) setCuota(await res.json());
+    } catch {
+      // sin cuota visible no pasa nada
+    }
+  }, []);
+
+  useEffect(() => {
+    refrescarCuota();
+  }, [refrescarCuota]);
 
   // Fusiona cambios parciales sin perder el resto del estado.
   const update = (patch: Partial<FormData>) =>
@@ -66,13 +89,18 @@ export default function Wizard() {
 
       const data = await res.json();
       if (!res.ok) {
+        if (data?.motivo === "necesita_email") {
+          setPedirEmail(data.error);
+          setCargando(false);
+          return;
+        }
         throw new Error(data?.error ?? "No se pudo generar el cuento.");
       }
 
       // Guardamos el cuento y los datos para la pantalla de resultado.
       sessionStorage.setItem(
         "cuentomagico:resultado",
-        JSON.stringify({ cuento: data.cuento, form }),
+        JSON.stringify({ cuento: data.cuento, cuentoId: data.cuentoId, form }),
       );
       router.push("/cuento");
     } catch (err) {
@@ -89,11 +117,30 @@ export default function Wizard() {
     return <PantallaCargando />;
   }
 
+  if (pedirEmail) {
+    return (
+      <div className="flex min-h-screen flex-col bg-[#FFF9F0]">
+        <Header cuota={cuota} />
+        <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-10 pt-6">
+          <EmailGate
+            mensaje={pedirEmail}
+            onCancelar={() => setPedirEmail(null)}
+            onHecho={async () => {
+              setPedirEmail(null);
+              await refrescarCuota();
+              generar();
+            }}
+          />
+        </main>
+      </div>
+    );
+  }
+
   const esUltimo = paso === TOTAL_PASOS - 1;
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FFF9F0]">
-      <Header />
+      <Header cuota={cuota} />
 
       <main className="mx-auto w-full max-w-xl flex-1 px-4 pb-28 pt-5">
         <div className="mb-6">
@@ -142,7 +189,19 @@ export default function Wizard() {
   );
 }
 
-function Header() {
+function textoCuota(cuota: Cuota | null): string | null {
+  if (!cuota) return null;
+  if (cuota.tipo === "familia") return "👨‍👩‍👧 Familia · cuentos ilimitados";
+  if (cuota.tipo === "cerrado") return null;
+  const n = cuota.restantes ?? 0;
+  if (cuota.tipo === "email") {
+    return n === 1 ? "Te queda 1 cuento este mes" : `Te quedan ${n} cuentos este mes`;
+  }
+  return n === 1 ? "Te queda 1 cuento gratis" : `Te quedan ${n} cuentos gratis`;
+}
+
+function Header({ cuota }: { cuota: Cuota | null }) {
+  const insignia = textoCuota(cuota);
   return (
     <header
       className="px-4 py-6 text-center text-white"
@@ -150,10 +209,17 @@ function Header() {
         background: "linear-gradient(135deg, #FFD93D, #FF6B35, #FF6B9D)",
       }}
     >
-      <h1 className="text-2xl font-extrabold drop-shadow-sm">✨ CuentoMágico</h1>
+      <Link href="/" className="text-2xl font-extrabold drop-shadow-sm">
+        ✨ CuentoMágico
+      </Link>
       <p className="mt-1 text-sm font-semibold opacity-95">
         Aventuras que enseñan, con tu hijo de protagonista
       </p>
+      {insignia && (
+        <span className="mt-3 inline-block rounded-full bg-white/25 px-3 py-1 text-xs font-bold backdrop-blur">
+          {insignia}
+        </span>
+      )}
     </header>
   );
 }

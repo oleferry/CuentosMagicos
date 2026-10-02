@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { construirPromptImagen } from "@/lib/prompts";
+import { consumirImagen } from "@/lib/servidor/acceso";
 import type { EstiloId } from "@/types/cuento";
 
 // La generación de imágenes tarda más; damos margen al servidor (máx. en Vercel hobby).
@@ -8,6 +9,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 interface ImagenRequest {
+  cuentoId?: string;
   titulo: string;
   texto: string;
   nombre: string;
@@ -34,6 +36,17 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Falta el texto de la escena." },
       { status: 400 },
+    );
+  }
+
+  // Solo se ilustran cuentos generados de verdad (la familia no tiene límite).
+  if (!(await consumirImagen(body.cuentoId))) {
+    return NextResponse.json(
+      {
+        error:
+          "Este cuento ya no puede generar más ilustraciones. Crea un cuento nuevo.",
+      },
+      { status: 403 },
     );
   }
 
