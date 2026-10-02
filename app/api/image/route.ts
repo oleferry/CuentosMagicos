@@ -45,14 +45,30 @@ export async function POST(request: Request) {
     body.estilo ?? null,
   );
 
-  try {
-    const result = await openai.images.generate({
-      model: "gpt-image-1",
+  // Modelo económico primero; si la cuenta no lo tiene, el de siempre en calidad baja.
+  const generar = (model: string, quality: "low" | "medium") =>
+    openai.images.generate({
+      model,
       prompt,
       size: "1024x1024",
-      quality: "medium",
+      quality,
+      output_format: "jpeg",
+      output_compression: 80,
       n: 1,
     });
+
+  try {
+    let result;
+    try {
+      result = await generar("gpt-image-1-mini", "medium");
+    } catch (err) {
+      const modeloNoDisponible =
+        err instanceof OpenAI.APIError &&
+        (err.status === 404 || (err.status === 400 && /model/i.test(err.message)));
+      if (!modeloNoDisponible) throw err;
+      console.warn("gpt-image-1-mini no disponible, usando gpt-image-1 (low)");
+      result = await generar("gpt-image-1", "low");
+    }
 
     const b64 = result.data?.[0]?.b64_json;
     if (!b64) {
@@ -62,7 +78,7 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ image: `data:image/png;base64,${b64}` });
+    return NextResponse.json({ image: `data:image/jpeg;base64,${b64}` });
   } catch (err) {
     console.error("Error al generar la imagen:", err);
 

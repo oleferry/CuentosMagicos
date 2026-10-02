@@ -50,7 +50,7 @@ export default function CuentoViewer({
           className="cm-print-page rounded-2xl border-l-8 bg-white p-5 shadow-sm"
           style={{ borderLeftColor: BORDES[i % BORDES.length] }}
         >
-          <h3 className="mb-3 text-lg font-extrabold text-[#3a2c4d]">
+          <h3 className="mb-4 font-ligada text-2xl leading-relaxed text-[#3a2c4d]">
             {parte.titulo}
           </h3>
 
@@ -62,7 +62,10 @@ export default function CuentoViewer({
           />
 
           {parte.texto.split(/\n+/).map((parrafo, j) => (
-            <p key={j} className="mb-3 leading-relaxed text-[#3a2c4d] last:mb-0">
+            <p
+              key={j}
+              className="mb-4 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0"
+            >
               {parrafo}
             </p>
           ))}
@@ -78,7 +81,10 @@ export default function CuentoViewer({
             💡 Lo que aprendimos hoy
           </h3>
           {cuento.aprendimos.split(/\n+/).map((parrafo, j) => (
-            <p key={j} className="mb-2 leading-relaxed text-[#3a2c4d] last:mb-0">
+            <p
+              key={j}
+              className="mb-3 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0"
+            >
               {parrafo}
             </p>
           ))}

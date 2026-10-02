@@ -186,13 +186,13 @@ export function construirPromptImagen(
 ): string {
   const desc = descripcionEstilo(estilo);
   // Resumimos la escena para no mandar un prompt gigante al modelo de imagen.
-  const escena = texto.replace(/\s+/g, " ").trim().slice(0, 320);
+  const escena = texto.replace(/\s+/g, " ").trim().slice(0, 240);
   return [
-    `Ilustración de libro infantil profesional, de alta calidad y muy detallada, en estilo ${desc}.`,
-    "Una sola escena clara y bien compuesta, con personajes expresivos y entrañables, colores armoniosos e iluminación suave y cálida.",
+    `Ilustración sencilla para un libro de primeros lectores, inspirada en el estilo ${desc}.`,
+    "Formas simples y redondeadas, pocos elementos, colores planos y alegres, contornos limpios y fondo despejado.",
     `Protagonista: ${nombre || "un niño o niña"}.`,
-    `Escena que ilustrar: ${titulo}. ${escena}`,
-    "Imagen alegre y apropiada para niños pequeños. Sin texto, sin letras ni palabras dentro de la imagen.",
+    `Escena: ${titulo}. ${escena}`,
+    "Apropiada para niños pequeños. Sin texto, sin letras ni palabras dentro de la imagen.",
   ].join(" ");
 }
 
