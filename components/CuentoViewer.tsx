@@ -8,6 +8,7 @@ import type {
   ModoLectura,
   ParteCuento,
 } from "@/types/cuento";
+import LibroImprimible from "@/components/LibroImprimible";
 
 // Colores que rotan en el borde izquierdo de cada parte.
 const BORDES = ["#9B5DE5", "#FF6B9D", "#00BBF9", "#FF6B35"];
@@ -33,23 +34,37 @@ export default function CuentoViewer({
   onProgreso,
 }: CuentoViewerProps) {
   const total = cuento.partes.length;
-  // En modo aprender, letra más grande: frases cortas, una por línea.
-  const claseTexto =
-    modoLectura === "aprender"
-      ? "mb-2 font-ligada text-2xl leading-[2.3] text-[#3a2c4d] last:mb-0"
-      : "mb-4 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0";
+  const aprender = modoLectura === "aprender";
+  // En modo aprender, letra más grande para leerlo solo.
+  const claseTexto = aprender
+    ? "mb-4 font-ligada text-2xl leading-[2.2] text-[#3a2c4d] last:mb-0"
+    : "mb-4 font-ligada text-xl leading-[2.2] text-[#3a2c4d] last:mb-0";
   const [estados, setEstados] = useState<EstadoImagen[]>(() =>
     Array(total).fill("cargando"),
   );
+  // Se guardan las imágenes para reutilizarlas en la maqueta de impresión.
+  const [imagenes, setImagenes] = useState<(string | null)[]>(() =>
+    Array(total).fill(null),
+  );
 
-  const setEstadoEn = useCallback((i: number, e: EstadoImagen) => {
-    setEstados((prev) => {
-      if (prev[i] === e) return prev;
-      const next = [...prev];
-      next[i] = e;
-      return next;
-    });
-  }, []);
+  const setEstadoEn = useCallback(
+    (i: number, e: EstadoImagen, src?: string) => {
+      setEstados((prev) => {
+        if (prev[i] === e) return prev;
+        const next = [...prev];
+        next[i] = e;
+        return next;
+      });
+      if (src) {
+        setImagenes((prev) => {
+          const next = [...prev];
+          next[i] = src;
+          return next;
+        });
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const listas = estados.filter((e) => e === "ok" || e === "error").length;
@@ -57,7 +72,23 @@ export default function CuentoViewer({
   }, [estados, total, onProgreso]);
 
   return (
-    <div className="space-y-5">
+    <>
+    {/* En modo aprender, la impresión usa la maqueta de 2 páginas por hoja. */}
+    {aprender && (
+      <LibroImprimible
+        titulo={cuento.titulo}
+        nombre={nombre ?? ""}
+        partes={cuento.partes}
+        aprendimos={cuento.aprendimos}
+        imagenes={imagenes}
+      />
+    )}
+    <div className={aprender ? "solo-pantalla space-y-5" : "space-y-5"}>
+      {cuento.titulo && (
+        <h2 className="px-2 text-center font-ligada text-3xl leading-relaxed text-[#3a2c4d]">
+          {cuento.titulo}
+        </h2>
+      )}
       {cuento.partes.map((parte, i) => (
         <article
           key={i}
@@ -74,7 +105,7 @@ export default function CuentoViewer({
             claveCache={cuentoId ? `cuentomagico:img:${cuentoId}:${i}` : null}
             nombre={nombre ?? ""}
             estilo={estilo ?? null}
-            onEstado={(e) => setEstadoEn(i, e)}
+            onEstado={(e, src) => setEstadoEn(i, e, src)}
           />
 
           {parte.texto.split(/\n+/).map((parrafo, j) => (
@@ -107,6 +138,7 @@ export default function CuentoViewer({
         </p>
       )}
     </div>
+    </>
   );
 }
 
@@ -116,7 +148,7 @@ interface IlustracionProps {
   claveCache: string | null; // dónde guardar la imagen para no regenerarla al recargar
   nombre: string;
   estilo: EstiloId | null;
-  onEstado?: (estado: EstadoImagen) => void;
+  onEstado?: (estado: EstadoImagen, src?: string) => void;
 }
 
 function leerCache(clave: string | null): string | null {
@@ -153,9 +185,9 @@ function Ilustracion({
   // Reportamos el estado al padre sin meterlo en deps (evita bucles de render).
   const onEstadoRef = useRef(onEstado);
   onEstadoRef.current = onEstado;
-  const reportar = (e: EstadoImagen) => {
+  const reportar = (e: EstadoImagen, imagen?: string) => {
     setEstado(e);
-    onEstadoRef.current?.(e);
+    onEstadoRef.current?.(e, imagen);
   };
 
   const generar = useCallback(async () => {
@@ -177,7 +209,7 @@ function Ilustracion({
       if (!res.ok) throw new Error(data?.error ?? "No se pudo generar la imagen.");
       setSrc(data.image);
       guardarCache(claveCache, data.image);
-      reportar("ok");
+      reportar("ok", data.image);
     } catch (err) {
       setMensaje(
         err instanceof Error ? err.message : "No se pudo generar la imagen.",
@@ -194,7 +226,7 @@ function Ilustracion({
     const guardada = leerCache(claveCache);
     if (guardada) {
       setSrc(guardada);
-      reportar("ok");
+      reportar("ok", guardada);
       return;
     }
     generar();

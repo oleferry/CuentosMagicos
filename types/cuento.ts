@@ -51,6 +51,7 @@ export interface ParteCuento {
 }
 
 export interface CuentoParseado {
+  titulo?: string; // contenido de [TÍTULO: ...] (si el modelo lo incluye)
   partes: ParteCuento[];
   aprendimos: string; // contenido de [LO QUE APRENDIMOS HOY]
 }

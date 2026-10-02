@@ -36,6 +36,11 @@ body {
   animation: cm-bounce 1.4s infinite ease-in-out both;
 }
 
+/* La maqueta de libro solo aparece al imprimir. */
+.solo-impresion {
+  display: none;
+}
+
 /* Cuadrados de colores del fondo de la portada. */
 @keyframes cm-parpadeo {
   0%,
@@ -82,6 +87,46 @@ body {
 
   main {
     padding: 0 !important;
+    max-width: none !important;
+  }
+
+  /* Modo aprender: se imprime la maqueta de libro en vez de la vista de pantalla. */
+  .solo-pantalla {
+    display: none !important;
+  }
+
+  .solo-impresion {
+    display: block !important;
+  }
+
+  /* Una hoja A4 apaisada con dos páginas y línea de corte/doblez en medio. */
+  .cm-hoja {
+    display: flex;
+    height: 186mm;
+    break-after: page;
+    break-inside: avoid;
+  }
+
+  .cm-hoja:last-child {
+    break-after: auto;
+  }
+
+  .cm-pagina {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .cm-pagina:first-child {
+    padding-right: 7mm;
+  }
+
+  .cm-pagina + .cm-pagina {
+    padding-left: 7mm;
+    border-left: 0.3mm dashed #d9cfe6;
   }
 
   /* Cada escena ocupa su propia página. */

@@ -128,13 +128,13 @@ function combinar(seleccionados: string[], libre: string): string {
 export const SYSTEM_PROMPT =
   "Eres un escritor experto en cuentos infantiles educativos en español.";
 
-// Nivel para un niño que está aprendiendo a leer solo (en letra ligada).
+// Nivel para un niño de ~6 años que está aprendiendo a leer (en letra ligada):
+// frases claras para leerlas solo, pero con una historia con fondo.
 const NIVEL_APRENDER =
-  "LECTOR PRINCIPIANTE que está aprendiendo a leer solo: frases muy cortas de 3 a 6 palabras, " +
-  "una sola idea por frase, cada frase en su propia línea. Palabras cortas y muy conocidas, " +
-  "preferiblemente con sílabas sencillas (consonante + vocal: ma, pe, lo, su). Evita palabras de más " +
-  "de 3 sílabas y grupos difíciles (tr, bl, pr, cl...) siempre que puedas. Repite las palabras clave. " +
-  "Entre 100 y 150 palabras en total (25-40 por parte)";
+  "NIÑO DE 6 AÑOS QUE ESTÁ APRENDIENDO A LEER: frases claras y cortas (de 4 a 10 palabras), " +
+  "vocabulario sencillo y cotidiano, sin palabras rebuscadas ni muy largas. Agrupa las frases en " +
+  "párrafos breves de 2 o 3 frases (NO pongas cada frase en una línea distinta). " +
+  "Entre 220 y 300 palabras en total (55-75 por parte)";
 
 export function construirPrompt(form: FormData): string {
   const edad = form.edad ?? 6;
@@ -162,6 +162,7 @@ export function construirPrompt(form: FormData): string {
     `ESTILO VISUAL: ${estilo}`,
     "",
     "USA EXACTAMENTE esta estructura:",
+    "[TÍTULO: título del cuento]",
     "[PARTE 1: título]",
     "texto...",
     "[PARTE 2: título]",
@@ -176,11 +177,14 @@ export function construirPrompt(form: FormData): string {
     "IMPORTANTE:",
     ...(aprender
       ? [
-          "- Integra 2 datos reales y verificables sobre el tema, dichos de forma muy simple (ej.: «El sol es una estrella.»)",
+          "- El cuento debe tener un MENSAJE CON FONDO que un niño de 6 años entiende y le hace pensar (por ejemplo: la amistad, la valentía ante el miedo, la empatía, el esfuerzo, aceptar los errores, compartir o cuidar la naturaleza). Elige el que mejor encaje con el tema",
+          "- Construye un pequeño arco: un deseo o reto, una dificultad o un error, un momento de emoción (miedo, duda, tristeza...) y cómo el protagonista lo supera con esfuerzo o con ayuda",
+          "- Muestra lo que siente el protagonista con palabras sencillas. Que el mensaje se entienda por lo que pasa, sin sermones",
+          "- Integra 2 o 3 datos reales y verificables sobre el tema, explicados con sencillez",
           "- Usa el nombre del protagonista frecuentemente",
           "- Si se indican nombres de acompañantes, úsalos en la historia",
-          "- Es MUY importante respetar el límite de palabras y las frases cortas: es para que el niño lo lea solo",
-          "- En [LO QUE APRENDIMOS HOY] escribe solo 2 frases muy cortas",
+          "- Respeta el número de palabras y las frases cortas: es para que el niño lo lea",
+          "- En [LO QUE APRENDIMOS HOY] escribe 3 frases cortas: los datos aprendidos y el mensaje del cuento",
           "- Final feliz",
         ]
       : [
@@ -223,6 +227,7 @@ export function construirPromptImagen(
 export function parsearCuento(texto: string): CuentoParseado {
   const partes: ParteCuento[] = [];
   let aprendimos = "";
+  let tituloCuento: string | undefined;
 
   // Captura cada bloque [ENCABEZADO] seguido de su contenido hasta el siguiente [.
   const regex = /\[([^\]]+)\]([\s\S]*?)(?=\n?\[[^\]]+\]|$)/g;
@@ -242,6 +247,12 @@ export function parsearCuento(texto: string): CuentoParseado {
     const titulo =
       dosPuntos >= 0 ? encabezado.slice(dosPuntos + 1).trim() : encabezado;
 
+    // [TÍTULO: ...] es el título del cuento, no una parte.
+    if (/^t[ií]tulo\b/i.test(encabezado)) {
+      tituloCuento = (dosPuntos >= 0 ? titulo : contenido) || undefined;
+      continue;
+    }
+
     if (contenido) {
       partes.push({ titulo: titulo || encabezado, texto: contenido });
     }
@@ -252,5 +263,5 @@ export function parsearCuento(texto: string): CuentoParseado {
     partes.push({ titulo: "El cuento", texto: texto.trim() });
   }
 
-  return { partes, aprendimos };
+  return { titulo: tituloCuento, partes, aprendimos };
 }
