@@ -61,6 +61,25 @@ export const TEMAS_PRESET: TemaPreset[] = [
   { emoji: "🐛", etiqueta: "Insectos", tema: "Los insectos y su mundo" },
 ];
 
+export interface ValorPreset {
+  emoji: string;
+  etiqueta: string; // lo que ve el usuario en el chip
+  valor: string; // texto que se manda al prompt
+}
+
+// Mensaje o valor que deja el cuento (opcional: si no se elige, lo decide la historia).
+export const VALORES_PRESET: ValorPreset[] = [
+  { emoji: "🤝", etiqueta: "Amistad", valor: "La amistad" },
+  { emoji: "🦁", etiqueta: "Valentía", valor: "La valentía: dar un paso aunque tengas miedo" },
+  { emoji: "💛", etiqueta: "Empatía", valor: "La empatía: ponerse en el lugar del otro" },
+  { emoji: "💪", etiqueta: "Esfuerzo", valor: "El esfuerzo y no rendirse" },
+  { emoji: "🌱", etiqueta: "Aprender de los errores", valor: "Equivocarse es parte de aprender" },
+  { emoji: "🍪", etiqueta: "Compartir", valor: "Compartir con los demás" },
+  { emoji: "🌍", etiqueta: "Cuidar la naturaleza", valor: "Cuidar la naturaleza y los animales" },
+  { emoji: "⏳", etiqueta: "Paciencia", valor: "La paciencia" },
+  { emoji: "🌟", etiqueta: "Confiar en ti", valor: "La confianza en uno mismo" },
+];
+
 export interface EstiloOpcion {
   id: EstiloId;
   emoji: string;
@@ -145,6 +164,7 @@ export function construirPrompt(form: FormData): string {
   const acompanantes = combinar(form.secundarios, form.secundariosLibre);
   const lugar = combinar(form.lugar ? [form.lugar] : [], form.lugarLibre);
   const objetos = combinar(form.objetos, form.objetosLibre);
+  const valor = (form.valor ?? "").trim();
 
   const lineas: string[] = [
     "Escribe un cuento EDUCATIVO personalizado:",
@@ -158,6 +178,7 @@ export function construirPrompt(form: FormData): string {
 
   lineas.push(
     `TEMA EDUCATIVO: ${form.tema || "un tema educativo apropiado para su edad"}`,
+    ...(valor ? [`MENSAJE O VALOR: ${valor}`] : []),
     `NIVEL: ${nivel}`,
     `ESTILO VISUAL: ${estilo}`,
     "",
@@ -177,7 +198,9 @@ export function construirPrompt(form: FormData): string {
     "IMPORTANTE:",
     ...(aprender
       ? [
-          "- El cuento debe tener un MENSAJE CON FONDO que un niño de 6 años entiende y le hace pensar (por ejemplo: la amistad, la valentía ante el miedo, la empatía, el esfuerzo, aceptar los errores, compartir o cuidar la naturaleza). Elige el que mejor encaje con el tema",
+          valor
+            ? `- El cuento debe tener un MENSAJE CON FONDO sobre «${valor}» que un niño de 6 años entiende y le hace pensar`
+            : "- El cuento debe tener un MENSAJE CON FONDO que un niño de 6 años entiende y le hace pensar (por ejemplo: la amistad, la valentía ante el miedo, la empatía, el esfuerzo, aceptar los errores, compartir o cuidar la naturaleza). Elige el que mejor encaje con el tema",
           "- Construye un pequeño arco: un deseo o reto, una dificultad o un error, un momento de emoción (miedo, duda, tristeza...) y cómo el protagonista lo supera con esfuerzo o con ayuda",
           "- Muestra lo que siente el protagonista con palabras sencillas. Que el mensaje se entienda por lo que pasa, sin sermones",
           "- Integra 2 o 3 datos reales y verificables sobre el tema, explicados con sencillez",
@@ -189,6 +212,9 @@ export function construirPrompt(form: FormData): string {
         ]
       : [
           "- Integra mínimo 3 datos reales y verificables sobre el tema",
+          ...(valor
+            ? [`- Transmite el valor «${valor}» de forma natural, a través de lo que pasa en la historia y sin sermones`]
+            : []),
           "- Usa el nombre del protagonista frecuentemente",
           "- Si se indican nombres de acompañantes, úsalos a menudo en la historia",
           "- Cada parte debe ser extensa y detallada; respeta el número total de palabras indicado en NIVEL",

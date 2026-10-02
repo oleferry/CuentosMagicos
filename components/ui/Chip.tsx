@@ -1,8 +1,9 @@
 "use client";
 
-export type ChipColor = "rosa" | "azul" | "naranja" | "verde";
+export type ChipColor = "rosa" | "azul" | "naranja" | "verde" | "morado";
 
 const COLORES: Record<ChipColor, { bg: string; border: string; text: string }> = {
+  morado: { bg: "#9B5DE5", border: "#9B5DE5", text: "#ffffff" },
   rosa: { bg: "#FF6B9D", border: "#FF6B9D", text: "#ffffff" },
   azul: { bg: "#00BBF9", border: "#00BBF9", text: "#ffffff" },
   naranja: { bg: "#FF6B35", border: "#FF6B35", text: "#ffffff" },

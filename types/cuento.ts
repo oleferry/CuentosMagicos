@@ -26,6 +26,7 @@ export interface FormData {
   objetosLibre: string;
   // Paso 6
   tema: string; // texto completo del tema (preset o libre)
+  valor: string; // mensaje/valor del cuento (preset o libre); "" = lo elige la historia
   estilo: EstiloId | null;
 }
 
@@ -41,6 +42,7 @@ export const formDataInicial: FormData = {
   objetos: [],
   objetosLibre: "",
   tema: "",
+  valor: "",
   estilo: null,
 };
 
