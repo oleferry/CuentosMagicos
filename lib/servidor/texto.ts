@@ -76,7 +76,10 @@ export async function generarTextoCuento(form: FormData): Promise<string> {
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       const texto = await conClaude(prompt, maxTokens);
-      if (texto) return texto;
+      if (texto) {
+        console.info(`Cuento escrito por Claude (${MODELO_CLAUDE})`);
+        return texto;
+      }
       throw new Error("Claude devolvió una respuesta vacía.");
     } catch (err) {
       if (!process.env.OPENAI_API_KEY) throw err;
@@ -84,5 +87,7 @@ export async function generarTextoCuento(form: FormData): Promise<string> {
     }
   }
 
-  return conOpenAI(prompt, maxTokens);
+  const texto = await conOpenAI(prompt, maxTokens);
+  console.info("Cuento escrito por OpenAI");
+  return texto;
 }
