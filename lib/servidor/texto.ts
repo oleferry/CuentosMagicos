@@ -29,12 +29,25 @@ async function conClaude(prompt: string, maxTokens: number): Promise<string> {
   const mensaje = await claude.messages.create({
     model: MODELO_CLAUDE,
     max_tokens: maxTokens,
+    // Sonnet 5.5 "piensa" por defecto antes de escribir, y ese pensamiento consume
+    // tokens de salida. Aquí sobra (el prompt ya pide un [PLAN] explícito): lo
+    // desactivamos con "between_tools" ("disabled" no se admite en este modelo).
+    ...(MODELO_CLAUDE.startsWith("claude-sonnet-5-5")
+      ? { thinking: { type: "between_tools" as const } }
+      : {}),
     system: SYSTEM_PROMPT,
     messages: [{ role: "user", content: prompt }],
   });
   if (mensaje.stop_reason === "refusal") {
     throw new Error("Claude no ha querido escribir este cuento.");
   }
+  if (mensaje.stop_reason === "max_tokens") {
+    // Un cuento cortado no sirve: se escribe con el proveedor de respaldo.
+    throw new Error(`Cuento incompleto: Claude llegó al máximo de ${maxTokens} tokens.`);
+  }
+  console.info(
+    `Tokens Claude · entrada: ${mensaje.usage.input_tokens} · salida: ${mensaje.usage.output_tokens}`,
+  );
   return mensaje.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
     .map((b) => b.text)
@@ -71,7 +84,8 @@ async function conOpenAI(prompt: string, maxTokens: number): Promise<string> {
 export async function generarTextoCuento(form: FormData): Promise<string> {
   const prompt = construirPrompt(form);
   // Margen para el [PLAN] y [PERSONAJES] que preceden al cuento.
-  const maxTokens = form.modoLectura === "aprender" ? 1800 : 4200;
+  // Es solo un tope (se paga lo que se escribe); amplio para que el cuento no se corte.
+  const maxTokens = form.modoLectura === "aprender" ? 2500 : 6000;
 
   if (process.env.ANTHROPIC_API_KEY) {
     try {
