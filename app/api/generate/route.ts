@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { parsearCuento } from "@/lib/prompts";
-import { concederImagenes, reservarCuento } from "@/lib/servidor/acceso";
+import { concederImagenes, esFamilia, reservarCuento } from "@/lib/servidor/acceso";
 import {
   esLimiteDePeticiones,
+  describirFoto,
   generarTextoCuento,
   hayProveedorTexto,
 } from "@/lib/servidor/texto";
@@ -52,7 +53,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const cuento = await generarTextoCuento(form);
+    // La foto solo se usa con el acceso de familia; a otros visitantes se les ignora.
+    const aspecto = esFamilia() && form.foto ? await describirFoto(form.foto) : null;
+    const cuento = await generarTextoCuento(form, aspecto);
 
     if (!cuento) {
       await reserva.liberar();

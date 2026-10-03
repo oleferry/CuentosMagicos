@@ -58,7 +58,12 @@ export default function Wizard() {
 
   const pasos = [
     <StepEdad key="edad" form={form} update={update} />,
-    <StepNombre key="nombre" form={form} update={update} />,
+    <StepNombre
+      key="nombre"
+      form={form}
+      update={update}
+      esFamilia={cuota?.tipo === "familia"}
+    />,
     <StepSecundarios key="secundarios" form={form} update={update} />,
     <StepLugar key="lugar" form={form} update={update} />,
     <StepObjetos key="objetos" form={form} update={update} />,
@@ -97,10 +102,15 @@ export default function Wizard() {
         throw new Error(data?.error ?? "No se pudo generar el cuento.");
       }
 
-      // Guardamos el cuento y los datos para la pantalla de resultado.
+      // Guardamos el cuento y los datos para la pantalla de resultado
+      // (sin la foto: no se guarda en ningún sitio).
       sessionStorage.setItem(
         "cuentomagico:resultado",
-        JSON.stringify({ cuento: data.cuento, cuentoId: data.cuentoId, form }),
+        JSON.stringify({
+          cuento: data.cuento,
+          cuentoId: data.cuentoId,
+          form: { ...form, foto: null },
+        }),
       );
       router.push("/cuento");
     } catch (err) {

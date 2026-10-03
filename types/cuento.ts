@@ -14,7 +14,7 @@ export interface FormData {
   modoLectura: ModoLectura;
   // Paso 2
   nombre: string;
-  fotoNombre: string | null; // fase 1: solo el nombre del archivo
+  foto: string | null; // foto reducida (data URL JPEG); solo familia, nunca se guarda
   // Paso 3 (opcional)
   secundarios: string[]; // chips seleccionados
   secundariosLibre: string;
@@ -34,7 +34,7 @@ export const formDataInicial: FormData = {
   edad: null,
   modoLectura: "aprender",
   nombre: "",
-  fotoNombre: null,
+  foto: null,
   secundarios: [],
   secundariosLibre: "",
   lugar: "",

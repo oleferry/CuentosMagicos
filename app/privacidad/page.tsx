@@ -63,6 +63,12 @@ export default function PrivacidadPage() {
               se usan solo para generarlo en ese momento y no los guardamos en nuestros
               servidores. El cuento se conserva únicamente en tu navegador.
             </p>
+            <p>
+              <strong>La foto del protagonista</strong> (opcional y solo disponible con
+              el acceso de familia) se envía una única vez al proveedor de IA para
+              anotar sus rasgos visibles (pelo, ojos, piel, gafas) y que el dibujo se le
+              parezca. No se guarda en nuestros servidores ni en tu navegador.
+            </p>
           </Bloque>
 
           <Bloque titulo="Base legal">

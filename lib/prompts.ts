@@ -168,7 +168,11 @@ const REGLAS_HILO = [
   "- Mantén los mismos personajes, el mismo lugar principal y el mismo objetivo durante todo el cuento",
 ];
 
-export function construirPrompt(form: FormData): string {
+export function construirPrompt(
+  form: FormData,
+  aspectoProtagonista?: string | null, // rasgos sacados de su foto (solo familia)
+): string {
+  const aspecto = (aspectoProtagonista ?? "").trim();
   const edad = form.edad ?? 6;
   const aprender = form.modoLectura === "aprender";
   const nivel = aprender ? NIVEL_APRENDER : nivelPorEdad(edad as Edad);
@@ -184,6 +188,8 @@ export function construirPrompt(form: FormData): string {
     "",
     `PROTAGONISTA: ${form.nombre || "el niño/a"}, ${edad} años`,
   ];
+
+  if (aspecto) lineas.push(`ASPECTO DEL PROTAGONISTA (según su foto): ${aspecto}`);
 
   if (acompanantes) lineas.push(`ACOMPAÑANTES: ${acompanantes}`);
   if (lugar) lineas.push(`LUGAR: ${lugar}`);
@@ -203,7 +209,10 @@ export function construirPrompt(form: FormData): string {
     "Hasta que: el momento decisivo, en el que el protagonista elige qué hacer (aquí se ve el mensaje)",
     "Y desde entonces: cómo termina y qué ha cambiado en él",
     "",
-    "PASO 2. En [PERSONAJES] describe en una sola línea el aspecto físico del protagonista y de los acompañantes (pelo, ropa, colores), para que todas las ilustraciones sean coherentes.",
+    "PASO 2. En [PERSONAJES] describe en una sola línea el aspecto físico del protagonista y de los acompañantes (pelo, ropa, colores), para que todas las ilustraciones sean coherentes." +
+      (aspecto
+        ? " Para el protagonista copia fielmente los rasgos de ASPECTO DEL PROTAGONISTA (pelo, ojos, piel, gafas...) y añade solo la ropa."
+        : ""),
     "",
     "PASO 3. Escribe el cuento contando ESA historia, con EXACTAMENTE esta estructura:",
     "[PLAN]",
