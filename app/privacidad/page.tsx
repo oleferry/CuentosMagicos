@@ -5,11 +5,11 @@ export const metadata: Metadata = {
   title: "Privacidad · CuentoMágico",
 };
 
-// ⚠️ Rellenar con los datos reales del responsable antes de abrir la web al público.
-const RESPONSABLE = "[Nombre del responsable]";
-const CONTACTO = "[email de contacto]";
+// Responsable del tratamiento y email de contacto para ejercer derechos.
+const RESPONSABLE = "Daniel Paniagua";
+const CONTACTO = "daniel.paniagua.f@gmail.com";
 
-const ACTUALIZADO = "2 de octubre de 2026";
+const ACTUALIZADO = "3 de octubre de 2026";
 
 function Bloque({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (

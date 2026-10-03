@@ -22,7 +22,7 @@ function numeroEnv(nombre: string, defecto: number): number {
 export const LIMITES = {
   anonimo: numeroEnv("LIMITE_SIN_EMAIL", 2),
   email: numeroEnv("LIMITE_CON_EMAIL", 10),
-  globalDia: numeroEnv("LIMITE_GLOBAL_DIA", 50),
+  globalDia: numeroEnv("LIMITE_GLOBAL_DIA", 20),
   altasEmailPorIpDia: 3,
   intentosFamiliaPorHora: 10,
 };
