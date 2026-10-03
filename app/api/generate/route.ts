@@ -7,6 +7,11 @@ import type { FormData } from "@/types/cuento";
 // Ejecuta siempre en el servidor; nunca expone la API key al cliente.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
+
+// Modelo de texto (configurable en Vercel). Si la cuenta no lo tiene, se usa el de respaldo.
+const MODELO = process.env.OPENAI_MODELO_TEXTO || "gpt-4.1-mini";
+const MODELO_RESPALDO = "gpt-4o-mini";
 
 export async function POST(request: Request) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -50,14 +55,28 @@ export async function POST(request: Request) {
   const openai = new OpenAI({ apiKey });
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: form.modoLectura === "aprender" ? 1200 : 3500,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: construirPrompt(form) },
-      ],
-    });
+    // Margen extra para el [PLAN] y [PERSONAJES] que preceden al cuento.
+    const pedir = (model: string) =>
+      openai.chat.completions.create({
+        model,
+        max_tokens: form.modoLectura === "aprender" ? 1800 : 4200,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: construirPrompt(form) },
+        ],
+      });
+
+    let completion;
+    try {
+      completion = await pedir(MODELO);
+    } catch (err) {
+      const modeloNoDisponible =
+        err instanceof OpenAI.APIError &&
+        (err.status === 404 || (err.status === 400 && /model/i.test(err.message)));
+      if (!modeloNoDisponible || MODELO === MODELO_RESPALDO) throw err;
+      console.warn(`${MODELO} no disponible, usando ${MODELO_RESPALDO}`);
+      completion = await pedir(MODELO_RESPALDO);
+    }
 
     const cuento = completion.choices[0]?.message?.content?.trim() ?? "";
 

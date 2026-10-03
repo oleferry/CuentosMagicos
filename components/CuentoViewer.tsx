@@ -103,6 +103,7 @@ export default function CuentoViewer({
             parte={parte}
             cuentoId={cuentoId}
             claveCache={cuentoId ? `cuentomagico:img:${cuentoId}:${i}` : null}
+            personajes={cuento.personajes}
             nombre={nombre ?? ""}
             estilo={estilo ?? null}
             onEstado={(e, src) => setEstadoEn(i, e, src)}
@@ -146,6 +147,7 @@ interface IlustracionProps {
   parte: ParteCuento;
   cuentoId?: string;
   claveCache: string | null; // dónde guardar la imagen para no regenerarla al recargar
+  personajes?: string; // aspecto de los personajes, igual en todas las ilustraciones
   nombre: string;
   estilo: EstiloId | null;
   onEstado?: (estado: EstadoImagen, src?: string) => void;
@@ -173,6 +175,7 @@ function Ilustracion({
   parte,
   cuentoId,
   claveCache,
+  personajes,
   nombre,
   estilo,
   onEstado,
@@ -199,6 +202,7 @@ function Ilustracion({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cuentoId,
+          personajes,
           titulo: parte.titulo,
           texto: parte.texto,
           nombre,
@@ -217,7 +221,7 @@ function Ilustracion({
       reportar("error");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cuentoId, claveCache, parte.titulo, parte.texto, nombre, estilo]);
+  }, [cuentoId, claveCache, personajes, parte.titulo, parte.texto, nombre, estilo]);
 
   // Solo una petición por montaje; si ya estaba generada, se usa la guardada.
   useEffect(() => {

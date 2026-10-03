@@ -10,6 +10,7 @@ export const maxDuration = 60;
 
 interface ImagenRequest {
   cuentoId?: string;
+  personajes?: string;
   titulo: string;
   texto: string;
   nombre: string;
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
     body.texto,
     body.nombre ?? "",
     body.estilo ?? null,
+    typeof body.personajes === "string" ? body.personajes : undefined,
   );
 
   // Modelo económico primero; si la cuenta no lo tiene, el de siempre en calidad baja.

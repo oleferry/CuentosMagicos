@@ -145,7 +145,10 @@ function combinar(seleccionados: string[], libre: string): string {
 // --- Construcción del prompt ---
 
 export const SYSTEM_PROMPT =
-  "Eres un escritor experto en cuentos infantiles educativos en español.";
+  "Eres un escritor de literatura infantil en español. Escribes historias de verdad: " +
+  "un solo hilo argumental, un protagonista que quiere algo y una trama en la que cada " +
+  "escena es consecuencia de la anterior. Los datos educativos y el mensaje forman parte " +
+  "de la aventura; nunca van sueltos.";
 
 // Nivel para un niño de ~6 años que está aprendiendo a leer (en letra ligada):
 // frases claras para leerlas solo, pero con una historia con fondo.
@@ -154,6 +157,16 @@ const NIVEL_APRENDER =
   "vocabulario sencillo y cotidiano, sin palabras rebuscadas ni muy largas. Agrupa las frases en " +
   "párrafos breves de 2 o 3 frases (NO pongas cada frase en una línea distinta). " +
   "Entre 220 y 300 palabras en total (55-75 por parte)";
+
+// Reglas para que el cuento sea UNA historia y no escenas sueltas (ambos modos).
+const REGLAS_HILO = [
+  "- Es UNA SOLA historia: el protagonista quiere o necesita algo desde la parte 1, y eso se resuelve en la parte 4",
+  "- Cada parte empieza justo donde terminó la anterior y hace avanzar la acción (usa enlaces como «Entonces», «Al día siguiente», «De repente», «Por eso»). Nunca empieces una parte como si fuera otro cuento",
+  "- Las partes 1, 2 y 3 terminan con algo que da ganas de seguir leyendo",
+  "- Los acompañantes y los objetos especiales tienen un papel en la trama: ayudan, se equivocan o son la clave para avanzar (no se limitan a aparecer)",
+  "- Los datos reales del tema son parte de la aventura: los personajes los descubren, los necesitan o los usan para avanzar. Nunca como lista ni como lección suelta",
+  "- Mantén los mismos personajes, el mismo lugar principal y el mismo objetivo durante todo el cuento",
+];
 
 export function construirPrompt(form: FormData): string {
   const edad = form.edad ?? 6;
@@ -182,41 +195,56 @@ export function construirPrompt(form: FormData): string {
     `NIVEL: ${nivel}`,
     `ESTILO VISUAL: ${estilo}`,
     "",
-    "USA EXACTAMENTE esta estructura:",
+    "PASO 1. En [PLAN] planifica la historia en 6 líneas cortas con esta espina dorsal (el lector no verá el plan):",
+    "Érase una vez: quién es el protagonista y qué desea",
+    "Un día: qué ocurre que pone en marcha la aventura",
+    "Por eso: qué hacen y qué descubren sobre el tema",
+    "Pero: qué dificultad o error aparece y cómo se siente el protagonista",
+    "Hasta que: el momento decisivo, en el que el protagonista elige qué hacer (aquí se ve el mensaje)",
+    "Y desde entonces: cómo termina y qué ha cambiado en él",
+    "",
+    "PASO 2. En [PERSONAJES] describe en una sola línea el aspecto físico del protagonista y de los acompañantes (pelo, ropa, colores), para que todas las ilustraciones sean coherentes.",
+    "",
+    "PASO 3. Escribe el cuento contando ESA historia, con EXACTAMENTE esta estructura:",
+    "[PLAN]",
+    "las 6 líneas del plan",
+    "[PERSONAJES]",
+    "descripción física en una línea",
     "[TÍTULO: título del cuento]",
-    "[PARTE 1: título]",
-    "texto...",
-    "[PARTE 2: título]",
-    "texto...",
-    "[PARTE 3: título]",
-    "texto...",
-    "[PARTE 4: título]",
-    "texto...",
+    "[PARTE 1: título corto de capítulo]",
+    "planteamiento: quién es, qué desea y el suceso que lo cambia todo",
+    "[PARTE 2: título corto de capítulo]",
+    "la aventura avanza: lo intentan, descubren cosas del tema y aparece la dificultad",
+    "[PARTE 3: título corto de capítulo]",
+    "el momento más difícil y la decisión del protagonista",
+    "[PARTE 4: título corto de capítulo]",
+    "desenlace: lo consiguen (o algo mejor) y qué ha cambiado",
     "[LO QUE APRENDIMOS HOY]",
     "resumen educativo",
     "",
+    "IMPORTANTE (hilo conductor):",
+    ...REGLAS_HILO,
+    "",
     "IMPORTANTE:",
+    "- El número de palabras indicado en NIVEL se refiere solo al cuento (de [PARTE 1] a [PARTE 4]); [PLAN] y [PERSONAJES] no cuentan",
     ...(aprender
       ? [
           valor
-            ? `- El cuento debe tener un MENSAJE CON FONDO sobre «${valor}» que un niño de 6 años entiende y le hace pensar`
-            : "- El cuento debe tener un MENSAJE CON FONDO que un niño de 6 años entiende y le hace pensar (por ejemplo: la amistad, la valentía ante el miedo, la empatía, el esfuerzo, aceptar los errores, compartir o cuidar la naturaleza). Elige el que mejor encaje con el tema",
-          "- Construye un pequeño arco: un deseo o reto, una dificultad o un error, un momento de emoción (miedo, duda, tristeza...) y cómo el protagonista lo supera con esfuerzo o con ayuda",
-          "- Muestra lo que siente el protagonista con palabras sencillas. Que el mensaje se entienda por lo que pasa, sin sermones",
+            ? `- El mensaje de fondo es «${valor}». Se demuestra con lo que decide y hace el protagonista en la parte 3, sin sermones`
+            : "- Elige un mensaje de fondo que encaje con el tema y que un niño de 6 años entienda (amistad, valentía, empatía, esfuerzo, aprender de los errores...). Se demuestra con lo que decide y hace el protagonista en la parte 3, sin sermones",
+          "- Muestra lo que siente el protagonista (ilusión, miedo, duda, alegría) con palabras sencillas",
           "- Integra 2 o 3 datos reales y verificables sobre el tema, explicados con sencillez",
-          "- Usa el nombre del protagonista frecuentemente",
-          "- Si se indican nombres de acompañantes, úsalos en la historia",
+          "- Usa el nombre del protagonista a menudo y, si se indican, los nombres de los acompañantes",
           "- Respeta el número de palabras y las frases cortas: es para que el niño lo lea",
           "- En [LO QUE APRENDIMOS HOY] escribe 3 frases cortas: los datos aprendidos y el mensaje del cuento",
           "- Final feliz",
         ]
       : [
           "- Integra mínimo 3 datos reales y verificables sobre el tema",
-          ...(valor
-            ? [`- Transmite el valor «${valor}» de forma natural, a través de lo que pasa en la historia y sin sermones`]
-            : []),
-          "- Usa el nombre del protagonista frecuentemente",
-          "- Si se indican nombres de acompañantes, úsalos a menudo en la historia",
+          valor
+            ? `- Transmite el valor «${valor}» a través de lo que decide y hace el protagonista, sin sermones`
+            : "- La historia deja un mensaje positivo que se entiende por lo que pasa, sin sermones",
+          "- Usa el nombre del protagonista frecuentemente y, si se indican, los nombres de los acompañantes",
           "- Cada parte debe ser extensa y detallada; respeta el número total de palabras indicado en NIVEL",
           "- Final feliz con aprendizaje claro",
           "- Adapta el lenguaje exactamente al nivel indicado",
@@ -233,14 +261,18 @@ export function construirPromptImagen(
   texto: string,
   nombre: string,
   estilo: EstiloId | null,
+  personajes?: string,
 ): string {
   const desc = descripcionEstilo(estilo);
+  // Mismo aspecto de los personajes en todas las ilustraciones del cuento.
+  const aspecto = (personajes ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
   // Resumimos la escena para no mandar un prompt gigante al modelo de imagen.
   const escena = texto.replace(/\s+/g, " ").trim().slice(0, 240);
   return [
     `Ilustración sencilla para un libro de primeros lectores, inspirada en el estilo ${desc}.`,
     "Formas simples y redondeadas, pocos elementos, colores planos y alegres, contornos limpios y fondo despejado.",
     `Protagonista: ${nombre || "un niño o niña"}.`,
+    ...(aspecto ? [`Personajes (mantén siempre este mismo aspecto): ${aspecto}`] : []),
     `Escena: ${titulo}. ${escena}`,
     "Apropiada para niños pequeños. Sin texto, sin letras ni palabras dentro de la imagen.",
   ].join(" ");
@@ -254,6 +286,7 @@ export function parsearCuento(texto: string): CuentoParseado {
   const partes: ParteCuento[] = [];
   let aprendimos = "";
   let tituloCuento: string | undefined;
+  let personajes: string | undefined;
 
   // Captura cada bloque [ENCABEZADO] seguido de su contenido hasta el siguiente [.
   const regex = /\[([^\]]+)\]([\s\S]*?)(?=\n?\[[^\]]+\]|$)/g;
@@ -265,6 +298,15 @@ export function parsearCuento(texto: string): CuentoParseado {
 
     if (/lo que aprendimos/i.test(encabezado)) {
       aprendimos = contenido;
+      continue;
+    }
+
+    // [PLAN] es solo para que la IA organice la historia: no se muestra.
+    if (/^plan\b/i.test(encabezado)) continue;
+
+    // [PERSONAJES] describe su aspecto para que las ilustraciones sean coherentes.
+    if (/^personajes\b/i.test(encabezado)) {
+      personajes = contenido || undefined;
       continue;
     }
 
@@ -289,5 +331,5 @@ export function parsearCuento(texto: string): CuentoParseado {
     partes.push({ titulo: "El cuento", texto: texto.trim() });
   }
 
-  return { titulo: tituloCuento, partes, aprendimos };
+  return { titulo: tituloCuento, personajes, partes, aprendimos };
 }
