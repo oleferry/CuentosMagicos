@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const RESPONSABLE = "Daniel Paniagua";
 const CONTACTO = "daniel.paniagua.f@gmail.com";
 
-const ACTUALIZADO = "3 de octubre de 2026";
+const ACTUALIZADO = "4 de octubre de 2026";
 
 function Bloque({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -81,8 +81,9 @@ export default function PrivacidadPage() {
 
           <Bloque titulo="Con quién se comparten">
             <p>
-              Usamos proveedores que tratan datos por nuestra cuenta: <strong>OpenAI</strong>{" "}
-              (generación del texto y las ilustraciones), <strong>Vercel</strong>{" "}
+              Usamos proveedores que tratan datos por nuestra cuenta:{" "}
+              <strong>Anthropic</strong> y <strong>OpenAI</strong> (generación del texto, las
+              ilustraciones y la descripción de la foto), <strong>Vercel</strong>{" "}
               (alojamiento de la web) y <strong>Upstash</strong> (base de datos de emails y
               contadores). Algunos están en Estados Unidos; las transferencias se amparan en
               las garantías previstas por el RGPD (cláusulas contractuales tipo o marco de
