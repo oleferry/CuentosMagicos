@@ -1,3 +1,4 @@
+import { nivelInfo } from "@/lib/niveles";
 import type {
   CuentoParseado,
   Edad,
@@ -150,14 +151,6 @@ export const SYSTEM_PROMPT =
   "escena es consecuencia de la anterior. Los datos educativos y el mensaje forman parte " +
   "de la aventura; nunca van sueltos.";
 
-// Nivel para un niño de ~6 años que está aprendiendo a leer (en letra ligada):
-// frases claras para leerlas solo, pero con una historia con fondo.
-const NIVEL_APRENDER =
-  "NIÑO DE 6 AÑOS QUE ESTÁ APRENDIENDO A LEER: frases claras y cortas (de 4 a 10 palabras), " +
-  "vocabulario sencillo y cotidiano, sin palabras rebuscadas ni muy largas. Agrupa las frases en " +
-  "párrafos breves de 2 o 3 frases (NO pongas cada frase en una línea distinta). " +
-  "Entre 220 y 300 palabras en total (55-75 por parte)";
-
 // Reglas para que el cuento sea UNA historia y no escenas sueltas (ambos modos).
 const REGLAS_HILO = [
   "- Es UNA SOLA historia: el protagonista quiere o necesita algo desde la parte 1, y eso se resuelve en la parte 4",
@@ -175,7 +168,12 @@ export function construirPrompt(
   const aspecto = (aspectoProtagonista ?? "").trim();
   const edad = form.edad ?? 6;
   const aprender = form.modoLectura === "aprender";
-  const nivel = aprender ? NIVEL_APRENDER : nivelPorEdad(edad as Edad);
+  const nivelLectura = form.nivelLectura ?? 3;
+  // Modo aprender: niño que está aprendiendo a leer (en letra ligada), según su nivel.
+  const nivel = aprender
+    ? `NIÑO QUE ESTÁ APRENDIENDO A LEER. ${nivelInfo(nivelLectura).prompt}. ` +
+      "Agrupa las frases en párrafos breves de 2 o 3 frases (NO pongas cada frase en una línea distinta)"
+    : nivelPorEdad(edad as Edad);
   const estilo = descripcionEstilo(form.estilo);
 
   const acompanantes = combinar(form.secundarios, form.secundariosLibre);
@@ -230,6 +228,14 @@ export function construirPrompt(
     "desenlace: lo consiguen (o algo mejor) y qué ha cambiado",
     "[LO QUE APRENDIMOS HOY]",
     "resumen educativo",
+    ...(aprender
+      ? [
+          "[PALABRAS PARA ESCRIBIR]",
+          "4 palabras del cuento separadas por comas",
+          "[FRASE PARA ESCRIBIR]",
+          "una frase corta del cuento",
+        ]
+      : []),
     "",
     "IMPORTANTE (hilo conductor):",
     ...REGLAS_HILO,
@@ -244,8 +250,16 @@ export function construirPrompt(
           "- Muestra lo que siente el protagonista (ilusión, miedo, duda, alegría) con palabras sencillas",
           "- Integra 2 o 3 datos reales y verificables sobre el tema, explicados con sencillez",
           "- Usa el nombre del protagonista a menudo y, si se indican, los nombres de los acompañantes",
-          "- Respeta el número de palabras y las frases cortas: es para que el niño lo lea",
+          "- Respeta el número de palabras, las frases cortas y las letras permitidas en NIVEL: es para que el niño lo lea solo",
+          ...(nivelLectura < 3
+            ? [
+                "- Las letras permitidas en NIVEL valen también para el título y los títulos de las partes",
+                "- Comprueba palabra por palabra que cada frase cumple el NIVEL; si una palabra no cumple, cámbiala por otra que sí",
+              ]
+            : []),
           "- En [LO QUE APRENDIMOS HOY] escribe 3 frases cortas: los datos aprendidos y el mensaje del cuento",
+          "- En [PALABRAS PARA ESCRIBIR] elige 4 palabras del cuento para practicar la escritura: sustantivos o verbos de 4 a 7 letras, que cumplan el NIVEL, sin nombres propios",
+          "- En [FRASE PARA ESCRIBIR] copia una frase del cuento de 3 a 5 palabras (28 letras como mucho) que cumpla el NIVEL y termine en punto",
           "- Final feliz",
         ]
       : [
@@ -296,6 +310,8 @@ export function parsearCuento(texto: string): CuentoParseado {
   let aprendimos = "";
   let tituloCuento: string | undefined;
   let personajes: string | undefined;
+  let palabras: string[] | undefined;
+  let frase: string | undefined;
 
   // Captura cada bloque [ENCABEZADO] seguido de su contenido hasta el siguiente [.
   const regex = /\[([^\]]+)\]([\s\S]*?)(?=\n?\[[^\]]+\]|$)/g;
@@ -316,6 +332,20 @@ export function parsearCuento(texto: string): CuentoParseado {
     // [PERSONAJES] describe su aspecto para que las ilustraciones sean coherentes.
     if (/^personajes\b/i.test(encabezado)) {
       personajes = contenido || undefined;
+      continue;
+    }
+
+    // Material para la ficha de caligrafía (modo aprender).
+    if (/^palabras\b/i.test(encabezado)) {
+      palabras = contenido
+        .split(/[,\n]+/)
+        .map((p) => p.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, "").toLowerCase())
+        .filter((p) => p.length >= 2 && p.length <= 10)
+        .slice(0, 4);
+      continue;
+    }
+    if (/^frase\b/i.test(encabezado)) {
+      frase = contenido.split("\n")[0].replace(/^[-•*"«\s]+|["»\s]+$/g, "").slice(0, 40) || undefined;
       continue;
     }
 
@@ -340,5 +370,5 @@ export function parsearCuento(texto: string): CuentoParseado {
     partes.push({ titulo: "El cuento", texto: texto.trim() });
   }
 
-  return { titulo: tituloCuento, personajes, partes, aprendimos };
+  return { titulo: tituloCuento, personajes, partes, aprendimos, palabras, frase };
 }

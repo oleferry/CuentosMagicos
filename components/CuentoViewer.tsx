@@ -9,6 +9,7 @@ import type {
   ParteCuento,
 } from "@/types/cuento";
 import LibroImprimible from "@/components/LibroImprimible";
+import type { MaterialCaligrafia } from "@/lib/caligrafia";
 
 // Colores que rotan en el borde izquierdo de cada parte.
 const BORDES = ["#9B5DE5", "#FF6B9D", "#00BBF9", "#FF6B35"];
@@ -21,6 +22,7 @@ interface CuentoViewerProps {
   nombre?: string;
   estilo?: EstiloId | null;
   modoLectura?: ModoLectura;
+  ficha?: MaterialCaligrafia | null; // ficha de caligrafía al imprimir (modo aprender)
   // Informa cuántas ilustraciones han terminado (ok o error) del total.
   onProgreso?: (listas: number, total: number) => void;
 }
@@ -31,6 +33,7 @@ export default function CuentoViewer({
   nombre,
   estilo,
   modoLectura,
+  ficha,
   onProgreso,
 }: CuentoViewerProps) {
   const total = cuento.partes.length;
@@ -81,6 +84,7 @@ export default function CuentoViewer({
         partes={cuento.partes}
         aprendimos={cuento.aprendimos}
         imagenes={imagenes}
+        ficha={ficha}
       />
     )}
     <div className={aprender ? "solo-pantalla space-y-5" : "space-y-5"}>

@@ -2,6 +2,7 @@
 
 import type { Edad, FormData, ModoLectura } from "@/types/cuento";
 import { EDADES } from "@/lib/prompts";
+import { NIVELES } from "@/lib/niveles";
 
 const MODOS: { id: ModoLectura; emoji: string; titulo: string; texto: string }[] = [
   {
@@ -81,6 +82,43 @@ export default function StepEdad({ form, update }: StepProps) {
           );
         })}
       </div>
+
+      {form.modoLectura === "aprender" && (
+        <>
+          <h3 className="mb-1 mt-8 text-base font-extrabold text-[#3a2c4d]">
+            ¿Qué letras conoce ya?
+          </h3>
+          <p className="mb-3 text-xs text-[#7a6b8a]">
+            El cuento solo usará palabras que pueda leer, como en el cole.
+          </p>
+          <div className="flex flex-col gap-2">
+            {NIVELES.map((n) => {
+              const selected = form.nivelLectura === n.id;
+              return (
+                <button
+                  key={n.id}
+                  type="button"
+                  onClick={() => update({ nivelLectura: n.id })}
+                  aria-pressed={selected}
+                  className="flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-3 text-left transition-all"
+                  style={{
+                    borderColor: selected ? "#9B5DE5" : "#E8E0F0",
+                    backgroundColor: selected ? "#F5EEFF" : "#ffffff",
+                  }}
+                >
+                  <span className="text-2xl">{n.emoji}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-extrabold text-[#3a2c4d]">
+                      Nivel {n.id} · {n.titulo}
+                    </span>
+                    <span className="block text-xs leading-snug text-[#7a6b8a]">{n.texto}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

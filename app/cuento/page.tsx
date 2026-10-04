@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   CuentoParseado,
   EstiloId,
   FormData,
   ModoLectura,
+  NivelLectura,
 } from "@/types/cuento";
 import { parsearCuento } from "@/lib/prompts";
+import { materialCaligrafia } from "@/lib/caligrafia";
 import CuentoViewer from "@/components/CuentoViewer";
 
 interface Resultado {
@@ -17,6 +19,7 @@ interface Resultado {
   nombre: string;
   estilo: EstiloId | null;
   modoLectura: ModoLectura;
+  nivelLectura: NivelLectura;
 }
 
 export default function CuentoPage() {
@@ -25,6 +28,7 @@ export default function CuentoPage() {
   const [vacio, setVacio] = useState(false);
   const [listas, setListas] = useState(0);
   const [totalImgs, setTotalImgs] = useState(0);
+  const [conFicha, setConFicha] = useState(true);
 
   const onProgreso = useCallback((l: number, t: number) => {
     setListas(l);
@@ -32,6 +36,16 @@ export default function CuentoPage() {
   }, []);
 
   const todasListas = totalImgs > 0 && listas >= totalImgs;
+  const aprender = resultado?.modoLectura === "aprender";
+
+  // Palabras y frase para la ficha de caligrafía (solo modo aprender).
+  const ficha = useMemo(
+    () =>
+      resultado && aprender
+        ? materialCaligrafia(resultado.cuento, resultado.nivelLectura)
+        : null,
+    [resultado, aprender],
+  );
 
   useEffect(() => {
     const raw = sessionStorage.getItem("cuentomagico:resultado");
@@ -51,6 +65,7 @@ export default function CuentoPage() {
         nombre: data.form?.nombre ?? "",
         estilo: data.form?.estilo ?? null,
         modoLectura: data.form?.modoLectura ?? "escuchar",
+        nivelLectura: data.form?.nivelLectura ?? 3,
       });
     } catch {
       setVacio(true);
@@ -94,19 +109,31 @@ export default function CuentoPage() {
         </h1>
       </header>
 
-      <main className="mx-auto w-full max-w-xl px-4 pb-40 pt-6">
+      <main className="mx-auto w-full max-w-xl px-4 pb-48 pt-6">
         <CuentoViewer
           cuento={resultado.cuento}
           cuentoId={resultado.cuentoId}
           nombre={resultado.nombre}
           estilo={resultado.estilo}
           modoLectura={resultado.modoLectura}
+          ficha={conFicha ? ficha : null}
           onProgreso={onProgreso}
         />
       </main>
 
       <nav className="no-print fixed bottom-0 left-0 right-0 border-t border-[#F0E6DA] bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2">
+          {aprender && (
+            <label className="flex cursor-pointer items-center gap-2 px-1 text-xs font-bold text-[#5a4a6a]">
+              <input
+                type="checkbox"
+                checked={conFicha}
+                onChange={(e) => setConFicha(e.target.checked)}
+                className="h-4 w-4 accent-[#9B5DE5]"
+              />
+              ✏️ Añadir ficha de caligrafía al PDF (su nombre y palabras del cuento)
+            </label>
+          )}
           <button
             type="button"
             onClick={() => window.print()}

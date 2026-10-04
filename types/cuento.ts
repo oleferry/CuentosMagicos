@@ -8,10 +8,14 @@ export type EstiloId = "disney" | "comic" | "manga" | "acuarela";
 // "aprender": lo lee el niño (frases muy cortas). "escuchar": se lo lee un adulto.
 export type ModoLectura = "aprender" | "escuchar";
 
+// Solo en modo "aprender": 1 primeras sílabas, 2 más letras, 3 ya lee frases (ver lib/niveles.ts).
+export type NivelLectura = 1 | 2 | 3;
+
 export interface FormData {
   // Paso 1
   edad: Edad | null;
   modoLectura: ModoLectura;
+  nivelLectura: NivelLectura;
   // Paso 2
   nombre: string;
   foto: string | null; // foto reducida (data URL JPEG); solo familia, nunca se guarda
@@ -33,6 +37,7 @@ export interface FormData {
 export const formDataInicial: FormData = {
   edad: null,
   modoLectura: "aprender",
+  nivelLectura: 2,
   nombre: "",
   foto: null,
   secundarios: [],
@@ -57,6 +62,8 @@ export interface CuentoParseado {
   personajes?: string; // aspecto físico de los personajes, para ilustraciones coherentes
   partes: ParteCuento[];
   aprendimos: string; // contenido de [LO QUE APRENDIMOS HOY]
+  palabras?: string[]; // palabras del cuento para la ficha de caligrafía (modo aprender)
+  frase?: string; // frase corta del cuento para la ficha de caligrafía
 }
 
 // Payload que se envía a /api/generate (subconjunto serializable del FormData).

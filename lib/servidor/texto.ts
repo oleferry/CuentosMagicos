@@ -5,7 +5,8 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
-import { construirPrompt, SYSTEM_PROMPT } from "@/lib/prompts";
+import { nivelInfo, palabrasFueraDeNivel } from "@/lib/niveles";
+import { construirPrompt, parsearCuento, SYSTEM_PROMPT } from "@/lib/prompts";
 import type { FormData } from "@/types/cuento";
 
 const MODELO_CLAUDE = process.env.ANTHROPIC_MODELO || "claude-sonnet-5-5";
@@ -159,30 +160,85 @@ export async function describirFoto(foto: unknown): Promise<string | null> {
   return texto || null;
 }
 
-export async function generarTextoCuento(
-  form: FormData,
-  aspectoProtagonista?: string | null,
-): Promise<string> {
-  const prompt = construirPrompt(form, aspectoProtagonista);
-  // Margen para el [PLAN] y [PERSONAJES] que preceden al cuento.
-  // Es solo un tope (se paga lo que se escribe); amplio para que el cuento no se corte.
-  const maxTokens = form.modoLectura === "aprender" ? 2500 : 6000;
-
+// Escribe con Claude y, si no hay clave o falla, con OpenAI.
+async function escribir(prompt: string, maxTokens: number, que: string): Promise<string> {
   if (process.env.ANTHROPIC_API_KEY) {
     try {
       const texto = await conClaude(prompt, maxTokens);
       if (texto) {
-        console.info(`Cuento escrito por Claude (${MODELO_CLAUDE})`);
+        console.info(`${que} escrito por Claude (${MODELO_CLAUDE})`);
         return texto;
       }
       throw new Error("Claude devolvió una respuesta vacía.");
     } catch (err) {
       if (!process.env.OPENAI_API_KEY) throw err;
-      console.warn("Claude ha fallado; se escribe el cuento con OpenAI:", err);
+      console.warn(`Claude ha fallado; ${que} se escribe con OpenAI:`, err);
     }
   }
 
   const texto = await conOpenAI(prompt, maxTokens);
-  console.info("Cuento escrito por OpenAI");
+  console.info(`${que} escrito por OpenAI`);
   return texto;
+}
+
+// --- Comprobación del nivel de lectura (modo aprender, niveles 1 y 2) ---
+
+// Palabras del cuento (título y partes) que el niño todavía no sabe leer.
+function fueraDeNivel(cuento: string, form: FormData): string[] {
+  const c = parsearCuento(cuento);
+  const texto = [c.titulo ?? "", ...c.partes.flatMap((p) => [p.titulo, p.texto])].join("\n");
+  return palabrasFueraDeNivel(texto, form.nivelLectura, [form.nombre, form.secundariosLibre]);
+}
+
+// Tolerancia: unas pocas palabras del tema (p. ej. «dinosaurio») se aceptan.
+const MAX_FUERA_DE_NIVEL = 3;
+// Solo se corrige si queda tiempo antes del límite de 60 s de la función.
+const TIEMPO_MAXIMO_PARA_CORREGIR_MS = 28_000;
+
+function promptCorreccion(cuento: string, form: FormData, fuera: string[]): string {
+  return [
+    "Este cuento es para un niño que está aprendiendo a leer y solo conoce algunas letras:",
+    nivelInfo(form.nivelLectura).prompt,
+    "",
+    `Estas palabras NO cumplen el nivel: ${fuera.join(", ")}.`,
+    "Devuelve el cuento COMPLETO con exactamente el mismo formato (todos los bloques entre corchetes, en el mismo orden), " +
+      "cambiando esas palabras, y si hace falta la frase entera, por otras que sí cumplan el nivel. " +
+      "Mantén la misma historia, los mismos personajes y la misma longitud. Responde solo con el cuento.",
+    "",
+    cuento,
+  ].join("\n");
+}
+
+export async function generarTextoCuento(
+  form: FormData,
+  aspectoProtagonista?: string | null,
+): Promise<string> {
+  const inicio = Date.now();
+  const prompt = construirPrompt(form, aspectoProtagonista);
+  // Margen para el [PLAN] y [PERSONAJES] que preceden al cuento.
+  // Es solo un tope (se paga lo que se escribe); amplio para que el cuento no se corte.
+  const maxTokens = form.modoLectura === "aprender" ? 2500 : 6000;
+  const cuento = await escribir(prompt, maxTokens, "Cuento");
+
+  const nivel = form.modoLectura === "aprender" ? form.nivelLectura : 3;
+  if (nivel >= 3) return cuento;
+
+  const fuera = fueraDeNivel(cuento, form);
+  console.info(`Nivel ${nivel}: ${fuera.length} palabras fuera de nivel`);
+  if (fuera.length <= MAX_FUERA_DE_NIVEL || Date.now() - inicio > TIEMPO_MAXIMO_PARA_CORREGIR_MS) {
+    return cuento;
+  }
+
+  // Una sola pasada de corrección; si sale peor o rota, se queda el original.
+  try {
+    const corregido = await escribir(promptCorreccion(cuento, form, fuera), maxTokens, "Corrección de nivel");
+    const quedan = fueraDeNivel(corregido, form);
+    const partesOk =
+      parsearCuento(corregido).partes.length === parsearCuento(cuento).partes.length;
+    console.info(`Nivel ${nivel}: tras corregir quedan ${quedan.length} palabras fuera de nivel`);
+    if (partesOk && quedan.length < fuera.length) return corregido;
+  } catch (err) {
+    console.warn("No se pudo corregir el nivel del cuento:", (err as Error)?.message);
+  }
+  return cuento;
 }

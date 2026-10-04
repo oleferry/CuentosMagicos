@@ -2,8 +2,11 @@
 // Maqueta SOLO para imprimir / guardar en PDF (modo aprender a leer):
 // A4 apaisado con dos páginas tipo libro por hoja.
 // Portada + partes + "Lo que aprendimos" -> 6 páginas = 3 hojas (2 a doble cara).
+// Con la ficha de caligrafía se añaden 2 páginas más (una hoja).
 
 import type { ParteCuento } from "@/types/cuento";
+import type { MaterialCaligrafia } from "@/lib/caligrafia";
+import { FichaEscribe, FichaRepasa } from "@/components/FichaCaligrafia";
 
 interface LibroImprimibleProps {
   titulo?: string;
@@ -11,12 +14,15 @@ interface LibroImprimibleProps {
   partes: ParteCuento[];
   aprendimos: string;
   imagenes: (string | null)[];
+  ficha?: MaterialCaligrafia | null; // null = sin ficha de caligrafía
 }
 
 type Pagina =
   | { tipo: "portada" }
   | { tipo: "parte"; parte: ParteCuento; indice: number; numero: number }
-  | { tipo: "aprendimos"; numero: number };
+  | { tipo: "aprendimos"; numero: number }
+  | { tipo: "fichaRepasa"; numero: number }
+  | { tipo: "fichaEscribe"; numero: number };
 
 const TINTA = "#3a2c4d";
 const MORADO = "#9B5DE5";
@@ -69,6 +75,7 @@ function NumeroPagina({ n }: { n: number }) {
 // (Medido: a 15pt caben ~88 palabras; la capacidad crece con el cuadrado del tamaño.)
 function tamanoLetra(texto: string): string {
   const palabras = texto.split(/\s+/).filter(Boolean).length;
+  if (palabras <= 45) return "18pt"; // nivel 1: partes cortas, letra más grande
   if (palabras <= 85) return "15pt";
   if (palabras <= 105) return "13.5pt";
   if (palabras <= 130) return "12pt";
@@ -142,6 +149,20 @@ function ContenidoPagina({
     );
   }
 
+  if (pagina.tipo === "fichaRepasa" || pagina.tipo === "fichaEscribe") {
+    const ficha = props.ficha ?? { palabras: [], frase: "" };
+    return (
+      <>
+        {pagina.tipo === "fichaRepasa" ? (
+          <FichaRepasa nombre={props.nombre} palabras={ficha.palabras} />
+        ) : (
+          <FichaEscribe nombre={props.nombre} palabras={ficha.palabras} frase={ficha.frase} />
+        )}
+        <NumeroPagina n={pagina.numero} />
+      </>
+    );
+  }
+
   return (
     <>
       <div
@@ -177,7 +198,11 @@ export default function LibroImprimible(props: LibroImprimibleProps) {
     paginas.push({ tipo: "parte", parte, indice, numero: indice + 1 }),
   );
   if (props.aprendimos) {
-    paginas.push({ tipo: "aprendimos", numero: props.partes.length + 1 });
+    paginas.push({ tipo: "aprendimos", numero: paginas.length });
+  }
+  if (props.ficha) {
+    paginas.push({ tipo: "fichaRepasa", numero: paginas.length });
+    paginas.push({ tipo: "fichaEscribe", numero: paginas.length });
   }
 
   // Agrupa de dos en dos: cada grupo es una hoja A4 apaisada.
