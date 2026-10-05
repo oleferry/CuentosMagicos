@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { parsearCuento } from "@/lib/prompts";
+import { letraInfo } from "@/lib/letras";
 import { concederImagenes, esFamilia, reservarCuento } from "@/lib/servidor/acceso";
 import {
   esLimiteDePeticiones,
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
   // Nivel de lectura desconocido (o de una versión anterior): el más avanzado.
   const nivel = Number(form.nivelLectura);
   form.nivelLectura = nivel === 1 || nivel === 2 ? nivel : 3;
+  // Letra protagonista: solo si existe y el niño ya la conoce en su nivel.
+  const letra = letraInfo(form.letra);
+  form.letra = letra && letra.nivel <= form.nivelLectura ? letra.id : "";
 
   // Comprueba los límites ANTES de gastar en la IA.
   const reserva = await reservarCuento();

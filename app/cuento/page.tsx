@@ -11,6 +11,7 @@ import type {
 } from "@/types/cuento";
 import { parsearCuento } from "@/lib/prompts";
 import { materialCaligrafia } from "@/lib/caligrafia";
+import { buscarLetra, letraInfo } from "@/lib/letras";
 import CuentoViewer from "@/components/CuentoViewer";
 
 interface Resultado {
@@ -20,6 +21,7 @@ interface Resultado {
   estilo: EstiloId | null;
   modoLectura: ModoLectura;
   nivelLectura: NivelLectura;
+  letra: string;
 }
 
 export default function CuentoPage() {
@@ -38,14 +40,23 @@ export default function CuentoPage() {
   const todasListas = totalImgs > 0 && listas >= totalImgs;
   const aprender = resultado?.modoLectura === "aprender";
 
+  const letra = aprender ? letraInfo(resultado?.letra) : null;
+
   // Palabras y frase para la ficha de caligrafía (solo modo aprender).
   const ficha = useMemo(
     () =>
       resultado && aprender
-        ? materialCaligrafia(resultado.cuento, resultado.nivelLectura)
+        ? materialCaligrafia(resultado.cuento, resultado.nivelLectura, letra)
         : null,
-    [resultado, aprender],
+    [resultado, aprender, letra],
   );
+
+  // Juego de buscar en el cuento las palabras con la letra protagonista.
+  const busca = useMemo(() => {
+    if (!resultado || !letra) return null;
+    const texto = resultado.cuento.partes.map((p) => p.texto).join("\n");
+    return { muestra: letra.muestra, ...buscarLetra(texto, letra) };
+  }, [resultado, letra]);
 
   useEffect(() => {
     const raw = sessionStorage.getItem("cuentomagico:resultado");
@@ -66,6 +77,7 @@ export default function CuentoPage() {
         estilo: data.form?.estilo ?? null,
         modoLectura: data.form?.modoLectura ?? "escuchar",
         nivelLectura: data.form?.nivelLectura ?? 3,
+        letra: data.form?.letra ?? "",
       });
     } catch {
       setVacio(true);
@@ -117,6 +129,7 @@ export default function CuentoPage() {
           estilo={resultado.estilo}
           modoLectura={resultado.modoLectura}
           ficha={conFicha ? ficha : null}
+          busca={busca}
           onProgreso={onProgreso}
         />
       </main>

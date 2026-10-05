@@ -16,6 +16,7 @@ export interface FormData {
   edad: Edad | null;
   modoLectura: ModoLectura;
   nivelLectura: NivelLectura;
+  letra: string; // "letra protagonista" (id de lib/letras.ts); "" = ninguna
   // Paso 2
   nombre: string;
   foto: string | null; // foto reducida (data URL JPEG); solo familia, nunca se guarda
@@ -38,6 +39,7 @@ export const formDataInicial: FormData = {
   edad: null,
   modoLectura: "aprender",
   nivelLectura: 2,
+  letra: "",
   nombre: "",
   foto: null,
   secundarios: [],
@@ -64,6 +66,7 @@ export interface CuentoParseado {
   aprendimos: string; // contenido de [LO QUE APRENDIMOS HOY]
   palabras?: string[]; // palabras del cuento para la ficha de caligrafía (modo aprender)
   frase?: string; // frase corta del cuento para la ficha de caligrafía
+  preguntas?: string[]; // preguntas para hablar del cuento al terminar
 }
 
 // Payload que se envía a /api/generate (subconjunto serializable del FormData).

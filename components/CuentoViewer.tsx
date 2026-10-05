@@ -23,6 +23,8 @@ interface CuentoViewerProps {
   estilo?: EstiloId | null;
   modoLectura?: ModoLectura;
   ficha?: MaterialCaligrafia | null; // ficha de caligrafía al imprimir (modo aprender)
+  // Juego de buscar las palabras con la letra protagonista (modo aprender).
+  busca?: { muestra: string; total: number; palabras: string[] } | null;
   // Informa cuántas ilustraciones han terminado (ok o error) del total.
   onProgreso?: (listas: number, total: number) => void;
 }
@@ -34,8 +36,10 @@ export default function CuentoViewer({
   estilo,
   modoLectura,
   ficha,
+  busca,
   onProgreso,
 }: CuentoViewerProps) {
+  const [verPalabras, setVerPalabras] = useState(false);
   const total = cuento.partes.length;
   const aprender = modoLectura === "aprender";
   // En modo aprender, letra más grande para leerlo solo.
@@ -85,6 +89,8 @@ export default function CuentoViewer({
         aprendimos={cuento.aprendimos}
         imagenes={imagenes}
         ficha={ficha}
+        preguntas={cuento.preguntas}
+        busca={busca}
       />
     )}
     <div className={aprender ? "solo-pantalla space-y-5" : "space-y-5"}>
@@ -134,6 +140,47 @@ export default function CuentoViewer({
               {parrafo}
             </p>
           ))}
+        </article>
+      )}
+
+      {cuento.preguntas && cuento.preguntas.length > 0 && (
+        <article className="rounded-2xl border-2 border-[#9B5DE5] bg-[#F5EEFF] p-5">
+          <h3 className="mb-1 text-lg font-extrabold text-[#3a2c4d]">💬 Hablamos del cuento</h3>
+          <p className="mb-3 text-xs text-[#7a6b8a]">
+            Charlad un rato al terminar: no hay respuestas buenas ni malas.
+          </p>
+          <ol className="space-y-2">
+            {cuento.preguntas.map((p, i) => (
+              <li key={i} className="font-ligada text-xl leading-[2] text-[#3a2c4d]">
+                {i + 1}. {p}
+              </li>
+            ))}
+          </ol>
+        </article>
+      )}
+
+      {busca && busca.total > 0 && (
+        <article className="rounded-2xl border-2 border-dashed border-[#00BBF9] bg-white p-5">
+          <h3 className="text-lg font-extrabold text-[#3a2c4d]">
+            🔎 Busca la <span className="font-ligada text-[#9B5DE5]">{busca.muestra}</span>
+          </h3>
+          <p className="mt-1 text-sm text-[#5a4a6a]">
+            En el cuento hay <strong>{busca.total}</strong> palabras con{" "}
+            <span className="font-ligada">{busca.muestra}</span>. ¿Las encuentras todas?
+          </p>
+          {verPalabras ? (
+            <p className="mt-3 font-ligada text-xl leading-[2] text-[#3a2c4d]">
+              {busca.palabras.join(", ")}
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setVerPalabras(true)}
+              className="mt-3 rounded-full bg-[#00BBF9] px-4 py-1.5 text-xs font-bold text-white"
+            >
+              Ver las palabras
+            </button>
+          )}
         </article>
       )}
 

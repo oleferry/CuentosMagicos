@@ -3,6 +3,7 @@
 import type { Edad, FormData, ModoLectura } from "@/types/cuento";
 import { EDADES } from "@/lib/prompts";
 import { NIVELES } from "@/lib/niveles";
+import { letraInfo, letrasHastaNivel } from "@/lib/letras";
 
 const MODOS: { id: ModoLectura; emoji: string; titulo: string; texto: string }[] = [
   {
@@ -98,7 +99,13 @@ export default function StepEdad({ form, update }: StepProps) {
                 <button
                   key={n.id}
                   type="button"
-                  onClick={() => update({ nivelLectura: n.id })}
+                  onClick={() =>
+                    update({
+                      nivelLectura: n.id,
+                      // Si la letra elegida es de un nivel superior, se quita.
+                      ...((letraInfo(form.letra)?.nivel ?? 1) > n.id ? { letra: "" } : {}),
+                    })
+                  }
                   aria-pressed={selected}
                   className="flex items-center gap-3 rounded-2xl border-2 bg-white px-4 py-3 text-left transition-all"
                   style={{
@@ -113,6 +120,36 @@ export default function StepEdad({ form, update }: StepProps) {
                     </span>
                     <span className="block text-xs leading-snug text-[#7a6b8a]">{n.texto}</span>
                   </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <h3 className="mb-1 mt-8 text-base font-extrabold text-[#3a2c4d]">
+            ¿Quieres practicar una letra? <span className="font-semibold text-[#7a6b8a]">(opcional)</span>
+          </h3>
+          <p className="mb-3 text-xs text-[#7a6b8a]">
+            Saldrá muchas veces en el cuento, en la ficha para escribir y en un juego para buscarla.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[{ id: "", muestra: "Ninguna" }, ...letrasHastaNivel(form.nivelLectura)].map((l) => {
+              const selected = form.letra === l.id;
+              return (
+                <button
+                  key={l.id || "ninguna"}
+                  type="button"
+                  onClick={() => update({ letra: l.id })}
+                  aria-pressed={selected}
+                  className={`min-w-[3rem] rounded-2xl border-2 px-3 py-1.5 text-[#3a2c4d] transition-all active:scale-95 ${
+                    l.id ? "font-ligada text-xl" : "text-sm font-bold"
+                  }`}
+                  style={{
+                    borderColor: selected ? "#9B5DE5" : "#E8E0F0",
+                    backgroundColor: selected ? "#9B5DE5" : "#ffffff",
+                    color: selected ? "#ffffff" : "#3a2c4d",
+                  }}
+                >
+                  {l.muestra}
                 </button>
               );
             })}

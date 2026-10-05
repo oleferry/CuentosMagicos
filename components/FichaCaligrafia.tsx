@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { MaterialCaligrafia } from "@/lib/caligrafia";
 
 // Ficha de caligrafía en letra ligada (2 páginas del libro imprimible):
 // cada palabra tiene un renglón de modelo (la primera en tinta y el resto
@@ -116,37 +117,44 @@ function Cabecera({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Página 1: el nombre del niño y 3 palabras del cuento.
-export function FichaRepasa({ nombre, palabras }: { nombre: string; palabras: string[] }) {
+// Ejercicios en orden: letra protagonista, nombre y palabras del cuento.
+// Caben 4 en la primera página; el resto pasa a la segunda.
+const POR_PAGINA = 4;
+
+function ejercicios(nombre: string, ficha: MaterialCaligrafia): string[] {
+  return [ficha.letra ?? "", nombre, ...ficha.palabras].filter(Boolean);
+}
+
+interface FichaProps {
+  nombre: string;
+  ficha: MaterialCaligrafia;
+}
+
+// Página 1: la letra de hoy, su nombre y palabras del cuento.
+export function FichaRepasa({ nombre, ficha }: FichaProps) {
   return (
     <>
       <Cabecera>✏️ Repasa y escribe</Cabecera>
-      {nombre && <Ejercicio texto={nombre} />}
-      {palabras.slice(0, nombre ? 3 : 4).map((p) => (
-        <Ejercicio key={p} texto={p} />
-      ))}
+      {ejercicios(nombre, ficha)
+        .slice(0, POR_PAGINA)
+        .map((t) => (
+          <Ejercicio key={t} texto={t} />
+        ))}
     </>
   );
 }
 
 // Página 2: el resto de palabras, una frase del cuento y un recuadro para dibujar.
-export function FichaEscribe({
-  nombre,
-  palabras,
-  frase,
-}: {
-  nombre: string;
-  palabras: string[];
-  frase: string;
-}) {
-  const resto = palabras.slice(nombre ? 3 : 4);
+export function FichaEscribe({ nombre, ficha }: FichaProps) {
   return (
     <>
       <Cabecera>✏️ Ahora, una frase del cuento</Cabecera>
-      {resto.map((p) => (
-        <Ejercicio key={p} texto={p} />
-      ))}
-      {frase && <Ejercicio texto={frase} />}
+      {ejercicios(nombre, ficha)
+        .slice(POR_PAGINA)
+        .map((t) => (
+          <Ejercicio key={t} texto={t} />
+        ))}
+      {ficha.frase && <Ejercicio texto={ficha.frase} />}
       <div
         style={{
           flex: 1,

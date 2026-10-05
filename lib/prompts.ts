@@ -1,4 +1,5 @@
 import { nivelInfo } from "@/lib/niveles";
+import { letraInfo } from "@/lib/letras";
 import type {
   CuentoParseado,
   Edad,
@@ -161,6 +162,14 @@ const REGLAS_HILO = [
   "- Mantén los mismos personajes, el mismo lugar principal y el mismo objetivo durante todo el cuento",
 ];
 
+// Preguntas para hablar del cuento al terminar (lectura dialógica): primero
+// recordar, luego pensar y por último relacionarlo con su propia vida.
+const REGLA_PREGUNTAS =
+  "- En [PREGUNTAS] escribe 3 preguntas cortas (de 12 palabras como mucho), una por línea, para hablar del cuento al terminar: " +
+  "1) RECORDAR: algo que pasa en el cuento (quién, qué, dónde); " +
+  "2) PENSAR: por qué pasa algo o cómo se siente un personaje, cuya respuesta no esté escrita tal cual; " +
+  "3) CONECTAR: relaciona el cuento con la vida del niño (¿Y tú...?). Sin numerar y sin respuestas";
+
 export function construirPrompt(
   form: FormData,
   aspectoProtagonista?: string | null, // rasgos sacados de su foto (solo familia)
@@ -180,6 +189,7 @@ export function construirPrompt(
   const lugar = combinar(form.lugar ? [form.lugar] : [], form.lugarLibre);
   const objetos = combinar(form.objetos, form.objetosLibre);
   const valor = (form.valor ?? "").trim();
+  const letra = aprender ? letraInfo(form.letra) : null;
 
   const lineas: string[] = [
     "Escribe un cuento EDUCATIVO personalizado:",
@@ -197,6 +207,13 @@ export function construirPrompt(
     `TEMA EDUCATIVO: ${form.tema || "un tema educativo apropiado para su edad"}`,
     ...(valor ? [`MENSAJE O VALOR: ${valor}`] : []),
     `NIVEL: ${nivel}`,
+    ...(letra
+      ? [
+          `LETRA PROTAGONISTA: «${letra.muestra}» (${letra.descripcion}). El cuento sirve para practicarla: ` +
+            "usa muchas palabras que la contengan (al menos 12 veces en total, repartidas por las 4 partes) y haz que " +
+            "algún personaje, objeto o lugar importante la lleve en su nombre. Esas palabras también deben cumplir el NIVEL",
+        ]
+      : []),
     `ESTILO VISUAL: ${estilo}`,
     "",
     "PASO 1. En [PLAN] planifica la historia en 6 líneas cortas con esta espina dorsal (el lector no verá el plan):",
@@ -228,6 +245,8 @@ export function construirPrompt(
     "desenlace: lo consiguen (o algo mejor) y qué ha cambiado",
     "[LO QUE APRENDIMOS HOY]",
     "resumen educativo",
+    "[PREGUNTAS]",
+    "las 3 preguntas, una por línea",
     ...(aprender
       ? [
           "[PALABRAS PARA ESCRIBIR]",
@@ -258,7 +277,9 @@ export function construirPrompt(
               ]
             : []),
           "- En [LO QUE APRENDIMOS HOY] escribe 3 frases cortas: los datos aprendidos y el mensaje del cuento",
-          "- En [PALABRAS PARA ESCRIBIR] elige 4 palabras del cuento para practicar la escritura: sustantivos o verbos de 4 a 7 letras, que cumplan el NIVEL, sin nombres propios",
+          REGLA_PREGUNTAS + ". Usa palabras sencillas que el niño pueda leer",
+          "- En [PALABRAS PARA ESCRIBIR] elige 4 palabras del cuento para practicar la escritura: sustantivos o verbos de 4 a 7 letras, que cumplan el NIVEL, sin nombres propios" +
+            (letra ? `, y que contengan «${letra.muestra}»` : ""),
           "- En [FRASE PARA ESCRIBIR] copia una frase del cuento de 3 a 5 palabras (28 letras como mucho) que cumpla el NIVEL y termine en punto",
           "- Final feliz",
         ]
@@ -270,6 +291,7 @@ export function construirPrompt(
           "- Usa el nombre del protagonista frecuentemente y, si se indican, los nombres de los acompañantes",
           "- Cada parte debe ser extensa y detallada; respeta el número total de palabras indicado en NIVEL",
           "- Final feliz con aprendizaje claro",
+          REGLA_PREGUNTAS,
           "- Adapta el lenguaje exactamente al nivel indicado",
         ]),
   );
@@ -312,6 +334,7 @@ export function parsearCuento(texto: string): CuentoParseado {
   let personajes: string | undefined;
   let palabras: string[] | undefined;
   let frase: string | undefined;
+  let preguntas: string[] | undefined;
 
   // Captura cada bloque [ENCABEZADO] seguido de su contenido hasta el siguiente [.
   const regex = /\[([^\]]+)\]([\s\S]*?)(?=\n?\[[^\]]+\]|$)/g;
@@ -344,6 +367,14 @@ export function parsearCuento(texto: string): CuentoParseado {
         .slice(0, 4);
       continue;
     }
+    if (/^preguntas?\b/i.test(encabezado)) {
+      preguntas = contenido
+        .split("\n")
+        .map((p) => p.replace(/^\s*(?:\d+[.)]|[-•*])\s*/, "").trim())
+        .filter((p) => p.length > 3)
+        .slice(0, 4);
+      continue;
+    }
     if (/^frase\b/i.test(encabezado)) {
       frase = contenido.split("\n")[0].replace(/^[-•*"«\s]+|["»\s]+$/g, "").slice(0, 40) || undefined;
       continue;
@@ -370,5 +401,5 @@ export function parsearCuento(texto: string): CuentoParseado {
     partes.push({ titulo: "El cuento", texto: texto.trim() });
   }
 
-  return { titulo: tituloCuento, personajes, partes, aprendimos, palabras, frase };
+  return { titulo: tituloCuento, personajes, partes, aprendimos, palabras, frase, preguntas };
 }

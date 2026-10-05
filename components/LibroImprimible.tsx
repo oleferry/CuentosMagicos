@@ -15,6 +15,8 @@ interface LibroImprimibleProps {
   aprendimos: string;
   imagenes: (string | null)[];
   ficha?: MaterialCaligrafia | null; // null = sin ficha de caligrafía
+  preguntas?: string[]; // para hablar del cuento al terminar
+  busca?: { muestra: string; total: number } | null; // juego de buscar la letra protagonista
 }
 
 type Pagina =
@@ -82,8 +84,8 @@ function tamanoLetra(texto: string): string {
   return "11pt";
 }
 
-function Parrafos({ texto }: { texto: string }) {
-  const fontSize = tamanoLetra(texto);
+function Parrafos({ texto, tamano }: { texto: string; tamano?: string }) {
+  const fontSize = tamano ?? tamanoLetra(texto);
   return (
     <>
       {texto.split(/\n+/).map((p, i) => (
@@ -154,9 +156,9 @@ function ContenidoPagina({
     return (
       <>
         {pagina.tipo === "fichaRepasa" ? (
-          <FichaRepasa nombre={props.nombre} palabras={ficha.palabras} />
+          <FichaRepasa nombre={props.nombre} ficha={ficha} />
         ) : (
-          <FichaEscribe nombre={props.nombre} palabras={ficha.palabras} frase={ficha.frase} />
+          <FichaEscribe nombre={props.nombre} ficha={ficha} />
         )}
         <NumeroPagina n={pagina.numero} />
       </>
@@ -173,18 +175,61 @@ function ContenidoPagina({
           padding: "6mm",
         }}
       >
-        <h2 style={{ fontSize: "13pt", fontWeight: 800, color: TINTA, margin: "0 0 3mm" }}>
+        <h2 style={{ fontSize: "12pt", fontWeight: 800, color: TINTA, margin: "0 0 2mm" }}>
           💡 Lo que aprendimos hoy
         </h2>
-        <Parrafos texto={props.aprendimos} />
+        <Parrafos texto={props.aprendimos} tamano="12.5pt" />
       </div>
+      {props.preguntas && props.preguntas.length > 0 && (
+        <div
+          style={{
+            marginTop: "4mm",
+            background: "#F5EEFF",
+            border: `0.6mm solid ${MORADO}`,
+            borderRadius: "5mm",
+            padding: "4mm 6mm",
+          }}
+        >
+          <h2 style={{ fontSize: "12pt", fontWeight: 800, color: TINTA, margin: "0 0 2mm" }}>
+            💬 Hablamos del cuento
+          </h2>
+          {props.preguntas.map((p, i) => (
+            <p
+              key={i}
+              className="font-ligada"
+              style={{ ...ESTILO_TEXTO, fontSize: "12.5pt", margin: "0 0 1.5mm" }}
+            >
+              {i + 1}. {p}
+            </p>
+          ))}
+        </div>
+      )}
+      {props.busca && props.busca.total > 0 && (
+        <p
+          style={{
+            marginTop: "4mm",
+            border: "0.6mm dashed #00BBF9",
+            borderRadius: "5mm",
+            padding: "3mm 5mm",
+            fontSize: "11pt",
+            fontWeight: 700,
+            color: TINTA,
+          }}
+        >
+          🔎 Busca en el cuento las palabras con{" "}
+          <span className="font-ligada" style={{ color: MORADO }}>
+            {props.busca.muestra}
+          </span>{" "}
+          y rodéalas con un lápiz. ¡Hay {props.busca.total}!
+        </p>
+      )}
       <p
         className="font-ligada"
-        style={{ fontSize: "30pt", textAlign: "center", color: MORADO, margin: "14mm 0 0" }}
+        style={{ fontSize: "24pt", textAlign: "center", color: MORADO, margin: "auto 0 0" }}
       >
         Fin
       </p>
-      <p style={{ textAlign: "center", fontSize: "10pt", color: "#7a6b8a", margin: "4mm 0 0" }}>
+      <p style={{ textAlign: "center", fontSize: "10pt", color: "#7a6b8a", margin: "2mm 0 0" }}>
         Un cuento mágico para {props.nombre || "ti"} 💛
       </p>
       <NumeroPagina n={pagina.numero} />
@@ -197,7 +242,7 @@ export default function LibroImprimible(props: LibroImprimibleProps) {
   props.partes.forEach((parte, indice) =>
     paginas.push({ tipo: "parte", parte, indice, numero: indice + 1 }),
   );
-  if (props.aprendimos) {
+  if (props.aprendimos || props.preguntas?.length) {
     paginas.push({ tipo: "aprendimos", numero: paginas.length });
   }
   if (props.ficha) {

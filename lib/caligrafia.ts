@@ -3,11 +3,13 @@
 // faltan (o el cuento es de una versión anterior), se sacan del propio texto.
 
 import { palabraEnNivel } from "@/lib/niveles";
+import { muestraParaEscribir, palabraConLetra, type LetraInfo } from "@/lib/letras";
 import type { CuentoParseado, NivelLectura } from "@/types/cuento";
 
 export interface MaterialCaligrafia {
   palabras: string[];
   frase: string;
+  letra?: string; // letra protagonista para escribir (p. ej. "m M")
 }
 
 const NUM_PALABRAS = 4;
@@ -66,13 +68,22 @@ function fraseDelTexto(cuento: CuentoParseado): string {
 export function materialCaligrafia(
   cuento: CuentoParseado,
   nivel: NivelLectura = 3,
+  letra: LetraInfo | null = null,
 ): MaterialCaligrafia {
   const palabras = (cuento.palabras ?? []).slice(0, NUM_PALABRAS);
-  for (const p of palabrasDelTexto(cuento, nivel)) {
+  // Si hay letra protagonista, primero las palabras que la contienen.
+  const candidatas = palabrasDelTexto(cuento, nivel);
+  const ordenadas = letra
+    ? [
+        ...candidatas.filter((p) => palabraConLetra(p, letra)),
+        ...candidatas.filter((p) => !palabraConLetra(p, letra)),
+      ]
+    : candidatas;
+  for (const p of ordenadas) {
     if (palabras.length >= NUM_PALABRAS) break;
     if (!palabras.includes(p)) palabras.push(p);
   }
   const frase =
     cuento.frase && cuento.frase.length <= MAX_LETRAS_FRASE + 10 ? cuento.frase : fraseDelTexto(cuento);
-  return { palabras, frase };
+  return { palabras, frase, letra: letra ? muestraParaEscribir(letra) : undefined };
 }
