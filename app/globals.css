@@ -4,6 +4,18 @@
 
 :root {
   --cm-fondo: #fff9f0;
+  /* Letra de los cuentos (clase font-ligada): ligada por defecto. */
+  --cm-letra: "Playwrite ES";
+}
+
+/* Opción "imprenta": letra para primeros lectores con algo más de espacio
+   entre letras, que facilita reconocer las palabras. */
+.letra-imprenta {
+  --cm-letra: "Andika";
+}
+
+.letra-imprenta .font-ligada {
+  letter-spacing: 0.04em;
 }
 
 html,

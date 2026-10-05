@@ -21,7 +21,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-nunito)", "system-ui", "sans-serif"],
-        ligada: ['"Playwrite ES"', "cursive"],
+        ligada: ["var(--cm-letra)", "cursive"],
       },
     },
   },

@@ -25,6 +25,7 @@ interface CuentoViewerProps {
   ficha?: MaterialCaligrafia | null; // ficha de caligrafía al imprimir (modo aprender)
   // Juego de buscar las palabras con la letra protagonista (modo aprender).
   busca?: { muestra: string; total: number; palabras: string[] } | null;
+  imprenta?: boolean; // ficha de caligrafía en letra de imprenta
   // Informa cuántas ilustraciones han terminado (ok o error) del total.
   onProgreso?: (listas: number, total: number) => void;
 }
@@ -37,6 +38,7 @@ export default function CuentoViewer({
   modoLectura,
   ficha,
   busca,
+  imprenta,
   onProgreso,
 }: CuentoViewerProps) {
   const [verPalabras, setVerPalabras] = useState(false);
@@ -89,6 +91,7 @@ export default function CuentoViewer({
         aprendimos={cuento.aprendimos}
         imagenes={imagenes}
         ficha={ficha}
+        imprenta={imprenta}
         preguntas={cuento.preguntas}
         busca={busca}
       />
@@ -124,6 +127,13 @@ export default function CuentoViewer({
               {parrafo}
             </p>
           ))}
+
+          {/* Una pausa a mitad del cuento: preguntar durante la lectura, no solo al final. */}
+          {i === 1 && total > 2 && (
+            <p className="mt-2 rounded-xl bg-[#F5EEFF] px-3 py-2 text-sm font-semibold text-[#5a4a6a]">
+              💬 Pausa: ¿qué crees que pasará ahora?
+            </p>
+          )}
         </article>
       ))}
 
@@ -147,7 +157,7 @@ export default function CuentoViewer({
         <article className="rounded-2xl border-2 border-[#9B5DE5] bg-[#F5EEFF] p-5">
           <h3 className="mb-1 text-lg font-extrabold text-[#3a2c4d]">💬 Hablamos del cuento</h3>
           <p className="mb-3 text-xs text-[#7a6b8a]">
-            Charlad un rato al terminar: no hay respuestas buenas ni malas.
+            De más fácil a más difícil. Es una charla, no un examen.
           </p>
           <ol className="space-y-2">
             {cuento.preguntas.map((p, i) => (
@@ -156,6 +166,11 @@ export default function CuentoViewer({
               </li>
             ))}
           </ol>
+          <p className="mt-3 text-xs leading-relaxed text-[#5a4a6a]">
+            <strong>Cómo hacerlo:</strong> espera su respuesta sin prisa, felicítale, añade algo a lo
+            que dice y pídele que lo repita. Para terminar: «¿Me cuentas tú el cuento?». Y si
+            mañana lo leéis otra vez, mejor: releer da soltura.
+          </p>
         </article>
       )}
 
@@ -166,7 +181,8 @@ export default function CuentoViewer({
           </h3>
           <p className="mt-1 text-sm text-[#5a4a6a]">
             En el cuento hay <strong>{busca.total}</strong> palabras con{" "}
-            <span className="font-ligada">{busca.muestra}</span>. ¿Las encuentras todas?
+            <span className="font-ligada">{busca.muestra}</span>. ¿Las encuentras todas? ¿Cómo
+            suena?
           </p>
           {verPalabras ? (
             <p className="mt-3 font-ligada text-xl leading-[2] text-[#3a2c4d]">

@@ -90,7 +90,14 @@ export default function StepEdad({ form, update }: StepProps) {
             ¿Qué letras conoce ya?
           </h3>
           <p className="mb-3 text-xs text-[#7a6b8a]">
-            El cuento solo usará palabras que pueda leer, como en el cole.
+            El cuento solo usará palabras que pueda leer, como en el cole.{" "}
+            <a
+              href="/en-que-nos-basamos"
+              target="_blank"
+              className="font-bold text-[#9B5DE5] underline"
+            >
+              ¿Por qué así?
+            </a>
           </p>
           <div className="flex flex-col gap-2">
             {NIVELES.map((n) => {

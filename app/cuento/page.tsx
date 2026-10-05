@@ -24,6 +24,8 @@ interface Resultado {
   letra: string;
 }
 
+const CLAVE_LETRA = "cuentomagico:letra";
+
 export default function CuentoPage() {
   const router = useRouter();
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -31,6 +33,25 @@ export default function CuentoPage() {
   const [listas, setListas] = useState(0);
   const [totalImgs, setTotalImgs] = useState(0);
   const [conFicha, setConFicha] = useState(true);
+  // Letra del cuento: ligada (la de muchos coles) o imprenta. Se recuerda en este dispositivo.
+  const [imprenta, setImprenta] = useState(false);
+
+  useEffect(() => {
+    try {
+      setImprenta(localStorage.getItem(CLAVE_LETRA) === "imprenta");
+    } catch {
+      // sin almacenamiento: ligada por defecto
+    }
+  }, []);
+
+  const elegirLetra = (enImprenta: boolean) => {
+    setImprenta(enImprenta);
+    try {
+      localStorage.setItem(CLAVE_LETRA, enImprenta ? "imprenta" : "ligada");
+    } catch {
+      // no pasa nada si no se puede recordar
+    }
+  };
 
   const onProgreso = useCallback((l: number, t: number) => {
     setListas(l);
@@ -121,7 +142,31 @@ export default function CuentoPage() {
         </h1>
       </header>
 
-      <main className="mx-auto w-full max-w-xl px-4 pb-48 pt-6">
+      <main
+        className={`mx-auto w-full max-w-xl px-4 pb-48 pt-6 ${imprenta ? "letra-imprenta" : ""}`}
+      >
+        <div className="no-print mb-5 flex items-center justify-center gap-2 text-xs font-bold text-[#5a4a6a]">
+          Letra:
+          {[
+            { valor: false, texto: "Ligada", clase: "font-[Playwrite_ES]" },
+            { valor: true, texto: "Imprenta", clase: "font-[Andika]" },
+          ].map((o) => (
+            <button
+              key={o.texto}
+              type="button"
+              onClick={() => elegirLetra(o.valor)}
+              aria-pressed={imprenta === o.valor}
+              className={`rounded-full border-2 px-3 py-1 text-sm ${o.clase}`}
+              style={{
+                borderColor: imprenta === o.valor ? "#9B5DE5" : "#E8E0F0",
+                backgroundColor: imprenta === o.valor ? "#9B5DE5" : "#ffffff",
+                color: imprenta === o.valor ? "#ffffff" : "#3a2c4d",
+              }}
+            >
+              {o.texto}
+            </button>
+          ))}
+        </div>
         <CuentoViewer
           cuento={resultado.cuento}
           cuentoId={resultado.cuentoId}
@@ -130,6 +175,7 @@ export default function CuentoPage() {
           modoLectura={resultado.modoLectura}
           ficha={conFicha ? ficha : null}
           busca={busca}
+          imprenta={imprenta}
           onProgreso={onProgreso}
         />
       </main>

@@ -27,12 +27,13 @@ export default function RootLayout({
   return (
     <html lang="es" className={nunito.variable}>
       <head>
-        {/* Letra ligada escolar (cursiva de 1º de primaria) para el texto de los cuentos. */}
+        {/* Letra de los cuentos: ligada escolar (Playwrite ES) o imprenta para
+            primeros lectores (Andika, con «a» y «g» de una sola panza). */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
           rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Playwrite+ES:wght@100..400&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Andika&family=Playwrite+ES:wght@100..400&display=swap"
         />
       </head>
       <body className="font-sans">{children}</body>

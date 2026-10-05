@@ -162,13 +162,15 @@ const REGLAS_HILO = [
   "- Mantén los mismos personajes, el mismo lugar principal y el mismo objetivo durante todo el cuento",
 ];
 
-// Preguntas para hablar del cuento al terminar (lectura dialógica): primero
-// recordar, luego pensar y por último relacionarlo con su propia vida.
+// Preguntas para hablar del cuento al terminar (lectura dialógica), de más
+// fácil a más difícil: recordar, inferir causas y emociones, y conectar con su
+// vida (van Kleeck 2008; Blewitt et al. 2009). Ver /en-que-nos-basamos.
 const REGLA_PREGUNTAS =
-  "- En [PREGUNTAS] escribe 3 preguntas cortas (de 12 palabras como mucho), una por línea, para hablar del cuento al terminar: " +
-  "1) RECORDAR: algo que pasa en el cuento (quién, qué, dónde); " +
-  "2) PENSAR: por qué pasa algo o cómo se siente un personaje, cuya respuesta no esté escrita tal cual; " +
-  "3) CONECTAR: relaciona el cuento con la vida del niño (¿Y tú...?). Sin numerar y sin respuestas";
+  "- En [PREGUNTAS] escribe 4 preguntas cortas (de 12 palabras como mucho), una por línea, de más fácil a más difícil, para hablar del cuento al terminar: " +
+  "1) RECORDAR: algo que pasa en el cuento (quién, qué o dónde); " +
+  "2) POR QUÉ: la causa de algo importante de la historia, cuya respuesta no esté escrita tal cual; " +
+  "3) SENTIR: cómo se siente un personaje en un momento clave y por qué; " +
+  "4) CONECTAR: relaciona el cuento con la vida del niño (¿Te ha pasado a ti...?, ¿Y tú qué harías...?). Sin numerar y sin respuestas";
 
 export function construirPrompt(
   form: FormData,
@@ -210,8 +212,9 @@ export function construirPrompt(
     ...(letra
       ? [
           `LETRA PROTAGONISTA: «${letra.muestra}» (${letra.descripcion}). El cuento sirve para practicarla: ` +
-            "usa muchas palabras que la contengan (al menos 12 veces en total, repartidas por las 4 partes) y haz que " +
-            "algún personaje, objeto o lugar importante la lleve en su nombre. Esas palabras también deben cumplir el NIVEL",
+            "usa entre 10 y 15 palabras que la contengan, repartidas por las 4 partes y varias de ellas EMPEZANDO por esa letra; " +
+            "haz que algún personaje, objeto o lugar importante la lleve en su nombre. Esas palabras también deben cumplir el NIVEL. " +
+            "El resto del cuento sigue usando las demás letras del nivel, para repasarlas",
         ]
       : []),
     `ESTILO VISUAL: ${estilo}`,
@@ -246,7 +249,7 @@ export function construirPrompt(
     "[LO QUE APRENDIMOS HOY]",
     "resumen educativo",
     "[PREGUNTAS]",
-    "las 3 preguntas, una por línea",
+    "las 4 preguntas, una por línea",
     ...(aprender
       ? [
           "[PALABRAS PARA ESCRIBIR]",

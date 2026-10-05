@@ -127,6 +127,10 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-[#F0E6DA] px-4 py-6 text-center text-xs text-[#7a6b8a]">
+        <Link href="/en-que-nos-basamos" className="font-bold hover:text-[#9B5DE5]">
+          En qué nos basamos
+        </Link>
+        <span className="mx-2">·</span>
         <Link href="/privacidad" className="font-bold hover:text-[#9B5DE5]">
           Privacidad
         </Link>

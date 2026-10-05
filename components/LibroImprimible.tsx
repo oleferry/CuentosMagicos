@@ -17,6 +17,7 @@ interface LibroImprimibleProps {
   ficha?: MaterialCaligrafia | null; // null = sin ficha de caligrafía
   preguntas?: string[]; // para hablar del cuento al terminar
   busca?: { muestra: string; total: number } | null; // juego de buscar la letra protagonista
+  imprenta?: boolean; // ficha en letra de imprenta en vez de ligada
 }
 
 type Pagina =
@@ -75,6 +76,7 @@ function NumeroPagina({ n }: { n: number }) {
 
 // Si una parte viene más larga de lo pedido, se reduce la letra para que no se corte.
 // (Medido: a 15pt caben ~88 palabras; la capacidad crece con el cuadrado del tamaño.)
+// (Con la letra de imprenta, Andika, cabe lo mismo: medido.)
 function tamanoLetra(texto: string): string {
   const palabras = texto.split(/\s+/).filter(Boolean).length;
   if (palabras <= 45) return "18pt"; // nivel 1: partes cortas, letra más grande
@@ -156,9 +158,9 @@ function ContenidoPagina({
     return (
       <>
         {pagina.tipo === "fichaRepasa" ? (
-          <FichaRepasa nombre={props.nombre} ficha={ficha} />
+          <FichaRepasa nombre={props.nombre} ficha={ficha} imprenta={props.imprenta} />
         ) : (
-          <FichaEscribe nombre={props.nombre} ficha={ficha} />
+          <FichaEscribe nombre={props.nombre} ficha={ficha} imprenta={props.imprenta} />
         )}
         <NumeroPagina n={pagina.numero} />
       </>
@@ -202,6 +204,10 @@ function ContenidoPagina({
               {i + 1}. {p}
             </p>
           ))}
+          <p style={{ fontSize: "8.5pt", color: "#7a6b8a", margin: "1.5mm 0 0" }}>
+            Para el adulto: espera su respuesta, felicítale, añade algo a lo que dice y anímale a
+            contar el cuento con sus palabras. Es una charla, no un examen.
+          </p>
         </div>
       )}
       {props.busca && props.busca.total > 0 && (
@@ -220,7 +226,7 @@ function ContenidoPagina({
           <span className="font-ligada" style={{ color: MORADO }}>
             {props.busca.muestra}
           </span>{" "}
-          y rodéalas con un lápiz. ¡Hay {props.busca.total}!
+          y rodéalas con un lápiz. ¡Hay {props.busca.total}! ¿Cómo suena?
         </p>
       )}
       <p
