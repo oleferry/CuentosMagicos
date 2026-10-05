@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CuentoParseado } from "@/types/cuento";
+import { retoBusca } from "@/lib/letras";
 
 // Lectura a pantalla completa, página a página (tablet o móvil): portada, una
 // parte por página con su ilustración y una página final con lo aprendido y
@@ -128,6 +129,14 @@ export default function LectorPaginas({
                 {cuento.titulo || `El cuento de ${nombre || "hoy"}`}
               </h1>
               <Imagen src={imagenes[0] ?? null} alto="min(45vh, 420px)" />
+              {aprender && cuento.palabrasNuevas && cuento.palabrasNuevas.length > 0 && (
+                <p className="text-sm text-[#5a4a6a]">
+                  📌 Palabras nuevas para leer juntos:{" "}
+                  <span className="font-ligada text-lg text-[#9B5DE5]">
+                    {cuento.palabrasNuevas.join(", ")}
+                  </span>
+                </p>
+              )}
               <p className="font-ligada text-xl md:text-2xl">Un cuento para {nombre || "ti"}</p>
             </div>
           )}
@@ -181,7 +190,7 @@ export default function LectorPaginas({
                 <p className="rounded-2xl border-2 border-dashed border-[#00BBF9] bg-white p-4 text-sm font-bold">
                   🔎 Vuelve atrás y busca las palabras con{" "}
                   <span className="font-ligada text-lg text-[#9B5DE5]">{busca.muestra}</span>.
-                  ¡Hay {busca.total}! ¿Cómo suena?
+                  {retoBusca(busca.total)} ¿Cómo suena?
                 </p>
               )}
               <p className="pt-2 text-center font-ligada text-4xl text-[#9B5DE5]">Fin</p>

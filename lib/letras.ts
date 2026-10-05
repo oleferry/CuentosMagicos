@@ -73,6 +73,12 @@ export function palabraConLetra(palabra: string, letra: LetraInfo): boolean {
   return letra.contiene(normalizar(palabra));
 }
 
+// Reto del juego: si salen muchísimas (en el nivel 1 la «m» puede salir 60 veces),
+// basta con encontrar 10.
+export function retoBusca(total: number): string {
+  return total > 15 ? `¡Hay ${total}! ¿Encuentras 10?` : `¡Hay ${total}! ¿Las encuentras todas?`;
+}
+
 // Juego "Busca la letra": cuántas veces aparecen en el texto palabras con la
 // letra y cuáles son (sin repetir, en el orden en que salen).
 export function buscarLetra(

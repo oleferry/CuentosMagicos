@@ -10,6 +10,7 @@ import type {
 } from "@/types/cuento";
 import LibroImprimible from "@/components/LibroImprimible";
 import LectorPaginas from "@/components/LectorPaginas";
+import { retoBusca } from "@/lib/letras";
 import type { MaterialCaligrafia } from "@/lib/caligrafia";
 
 // Colores que rotan en el borde izquierdo de cada parte.
@@ -111,6 +112,7 @@ export default function CuentoViewer({
         imprenta={imprenta}
         formato={formato}
         preguntas={cuento.preguntas}
+        palabrasNuevas={cuento.palabrasNuevas}
         busca={busca}
       />
     )}
@@ -119,6 +121,14 @@ export default function CuentoViewer({
         <h2 className="px-2 text-center font-ligada text-3xl leading-relaxed text-[#3a2c4d]">
           {cuento.titulo}
         </h2>
+      )}
+      {aprender && cuento.palabrasNuevas && cuento.palabrasNuevas.length > 0 && (
+        <p className="rounded-2xl border-2 border-dashed border-[#9B5DE5] bg-[#F5EEFF] px-4 py-3 text-sm text-[#5a4a6a]">
+          📌 <strong>Palabras nuevas para leer juntos antes de empezar:</strong>{" "}
+          <span className="font-ligada text-lg text-[#9B5DE5]">
+            {cuento.palabrasNuevas.join(", ")}
+          </span>
+        </p>
       )}
       {cuento.partes.map((parte, i) => (
         <article
@@ -198,8 +208,8 @@ export default function CuentoViewer({
             🔎 Busca la <span className="font-ligada text-[#9B5DE5]">{busca.muestra}</span>
           </h3>
           <p className="mt-1 text-sm text-[#5a4a6a]">
-            En el cuento hay <strong>{busca.total}</strong> palabras con{" "}
-            <span className="font-ligada">{busca.muestra}</span>. ¿Las encuentras todas? ¿Cómo
+            Busca en el cuento las palabras con{" "}
+            <span className="font-ligada">{busca.muestra}</span>. {retoBusca(busca.total)} ¿Cómo
             suena?
           </p>
           {verPalabras ? (

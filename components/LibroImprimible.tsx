@@ -7,6 +7,7 @@
 import type { ParteCuento } from "@/types/cuento";
 import type { MaterialCaligrafia } from "@/lib/caligrafia";
 import { FichaEscribe, FichaRepasa } from "@/components/FichaCaligrafia";
+import { retoBusca } from "@/lib/letras";
 
 interface LibroImprimibleProps {
   titulo?: string;
@@ -16,6 +17,7 @@ interface LibroImprimibleProps {
   imagenes: (string | null)[];
   ficha?: MaterialCaligrafia | null; // null = sin ficha de caligrafía
   preguntas?: string[]; // para hablar del cuento al terminar
+  palabrasNuevas?: string[]; // del tema, por encima del nivel: se leen antes con un adulto
   busca?: { muestra: string; total: number } | null; // juego de buscar la letra protagonista
   imprenta?: boolean; // ficha en letra de imprenta en vez de ligada
   // "papel": A4 apaisado con 2 páginas por hoja. "pantalla": una página por hoja
@@ -131,6 +133,14 @@ function ContenidoPagina({
         <div style={{ width: "100%" }}>
           <Imagen src={props.imagenes[0] ?? null} alto="78mm" />
         </div>
+        {props.palabrasNuevas && props.palabrasNuevas.length > 0 && (
+          <div style={{ fontSize: "10pt", color: "#5a4a6a" }}>
+            📌 Palabras nuevas para leer juntos:{" "}
+            <span className="font-ligada" style={{ fontSize: "13pt", color: MORADO }}>
+              {props.palabrasNuevas.join(", ")}
+            </span>
+          </div>
+        )}
         <p className="font-ligada" style={{ fontSize: "15pt", color: TINTA, margin: "auto 0 0" }}>
           Un cuento para {props.nombre || "ti"}
         </p>
@@ -229,7 +239,7 @@ function ContenidoPagina({
           <span className="font-ligada" style={{ color: MORADO }}>
             {props.busca.muestra}
           </span>{" "}
-          y rodéalas con un lápiz. ¡Hay {props.busca.total}! ¿Cómo suena?
+          y rodéalas con un lápiz. {retoBusca(props.busca.total)} ¿Cómo suena?
         </p>
       )}
       <p

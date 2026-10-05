@@ -187,23 +187,55 @@ async function escribir(prompt: string, maxTokens: number, que: string): Promise
 function fueraDeNivel(cuento: string, form: FormData): string[] {
   const c = parsearCuento(cuento);
   const texto = [c.titulo ?? "", ...c.partes.flatMap((p) => [p.titulo, p.texto])].join("\n");
-  return palabrasFueraDeNivel(texto, form.nivelLectura, [form.nombre, form.secundariosLibre]);
+  return palabrasFueraDeNivel(texto, form.nivelLectura, [
+    form.nombre,
+    form.secundariosLibre,
+    // Las «palabras nuevas» (se leen antes con un adulto) y sus plurales.
+    ...(c.palabrasNuevas ?? []).flatMap((p) => [p, `${p}s`, `${p}es`]),
+  ]);
 }
 
-// Tolerancia: unas pocas palabras del tema (p. ej. «dinosaurio») se aceptan.
-const MAX_FUERA_DE_NIVEL = 3;
-// Solo se corrige si queda tiempo antes del límite de 60 s de la función.
-const TIEMPO_MAXIMO_PARA_CORREGIR_MS = 28_000;
+// Tolerancia: unas pocas palabras (p. ej. «dinosaurio») se aceptan. Con 5 en un
+// cuento de nivel 1 (~170 palabras) queda en torno al 95 % de palabras del nivel;
+// exigir más produce frases forzadas (medido con cuentos reales).
+const MAX_FUERA_DE_NIVEL = 5;
+// Hasta 2 pasadas de corrección, cada una solo si queda tiempo antes del límite
+// de 60 s de la función (una pasada tarda ~10 s; medido con cuentos reales).
+const LIMITES_PASADAS_MS = [30_000, 38_000];
+
+function contarPalabras(texto: string): number {
+  return texto.split(/\s+/).filter(Boolean).length;
+}
 
 function promptCorreccion(cuento: string, form: FormData, fuera: string[]): string {
+  const nivel = nivelInfo(form.nivelLectura);
+  const largas = parsearCuento(cuento)
+    .partes.map((p, i) => ({ n: i + 1, palabras: contarPalabras(p.texto) }))
+    .filter((p) => p.palabras > nivel.maxPorParte);
   return [
     "Este cuento es para un niño que está aprendiendo a leer y solo conoce algunas letras:",
-    nivelInfo(form.nivelLectura).prompt,
+    nivel.prompt,
     "",
     `Estas palabras NO cumplen el nivel: ${fuera.join(", ")}.`,
-    "Devuelve el cuento COMPLETO con exactamente el mismo formato (todos los bloques entre corchetes, en el mismo orden), " +
-      "cambiando esas palabras, y si hace falta la frase entera, por otras que sí cumplan el nivel. " +
-      "Mantén la misma historia, los mismos personajes y la misma longitud. Responde solo con el cuento.",
+    "Las de [PALABRAS NUEVAS] sí se pueden usar (puedes añadir alguna más del tema hasta un total de 3).",
+    ...(largas.length
+      ? [
+          `Además, estas partes pasan de ${nivel.maxPorParte} palabras y hay que acortarlas: ` +
+            largas.map((p) => `parte ${p.n} (${p.palabras})`).join(", ") +
+            ".",
+        ]
+      : []),
+    "Devuelve el cuento COMPLETO con exactamente el mismo formato (todos los bloques entre corchetes, en el mismo orden). " +
+      "Nunca dejes dentro del texto comentarios, dudas ni correcciones tuyas. " +
+      "Los ENCABEZADOS entre corchetes ([PLAN], [PERSONAJES], [PALABRAS NUEVAS], [PARTE 1: ...], [LO QUE APRENDIMOS HOY], [PREGUNTAS], " +
+      "[PALABRAS PARA ESCRIBIR], [FRASE PARA ESCRIBIR]) se copian tal cual, letra por letra; solo cambia el título que va " +
+      "después de «PARTE N:» y de «TÍTULO:» si no cumple el nivel. " +
+      "Cambia esas palabras por otras que sí cumplan el nivel; si no hay ninguna, reescribe la frase o quítala. " +
+      "Revisa también las demás palabras de cada frase que cambies. Mantén la misma historia y los mismos personajes. " +
+      "Cada frase debe seguir teniendo sentido y sonar natural: si una palabra no tiene sustituto razonable, déjala. " +
+      "Si cambias algo de la historia, ajusta las [PREGUNTAS], [PALABRAS PARA ESCRIBIR] y [FRASE PARA ESCRIBIR] para que " +
+      "sigan encajando con el texto. " +
+      "Responde solo con el cuento.",
     "",
     cuento,
   ].join("\n");
@@ -223,22 +255,30 @@ export async function generarTextoCuento(
   const nivel = form.modoLectura === "aprender" ? form.nivelLectura : 3;
   if (nivel >= 3) return cuento;
 
-  const fuera = fueraDeNivel(cuento, form);
+  let mejor = cuento;
+  let fuera = fueraDeNivel(cuento, form);
   console.info(`Nivel ${nivel}: ${fuera.length} palabras fuera de nivel`);
-  if (fuera.length <= MAX_FUERA_DE_NIVEL || Date.now() - inicio > TIEMPO_MAXIMO_PARA_CORREGIR_MS) {
-    return cuento;
-  }
+  const numPartes = parsearCuento(cuento).partes.length;
 
-  // Una sola pasada de corrección; si sale peor o rota, se queda el original.
-  try {
-    const corregido = await escribir(promptCorreccion(cuento, form, fuera), maxTokens, "Corrección de nivel");
-    const quedan = fueraDeNivel(corregido, form);
-    const partesOk =
-      parsearCuento(corregido).partes.length === parsearCuento(cuento).partes.length;
-    console.info(`Nivel ${nivel}: tras corregir quedan ${quedan.length} palabras fuera de nivel`);
-    if (partesOk && quedan.length < fuera.length) return corregido;
-  } catch (err) {
-    console.warn("No se pudo corregir el nivel del cuento:", (err as Error)?.message);
+  // Cada pasada solo se acepta si mejora y no rompe el formato.
+  for (const limite of LIMITES_PASADAS_MS) {
+    if (fuera.length <= MAX_FUERA_DE_NIVEL || Date.now() - inicio > limite) break;
+    try {
+      const corregido = await escribir(promptCorreccion(mejor, form, fuera), maxTokens, "Corrección de nivel");
+      const quedan = fueraDeNivel(corregido, form);
+      console.info(`Nivel ${nivel}: tras corregir quedan ${quedan.length} palabras fuera de nivel`);
+      // Formato roto (p. ej. un encabezado cambiado): se descarta y se reintenta si hay tiempo.
+      if (parsearCuento(corregido).partes.length !== numPartes) {
+        console.warn("La corrección ha cambiado el formato del cuento; se descarta");
+        continue;
+      }
+      if (quedan.length >= fuera.length) break;
+      mejor = corregido;
+      fuera = quedan;
+    } catch (err) {
+      console.warn("No se pudo corregir el nivel del cuento:", (err as Error)?.message);
+      break;
+    }
   }
-  return cuento;
+  return mejor;
 }

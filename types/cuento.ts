@@ -67,6 +67,7 @@ export interface CuentoParseado {
   palabras?: string[]; // palabras del cuento para la ficha de caligrafía (modo aprender)
   frase?: string; // frase corta del cuento para la ficha de caligrafía
   preguntas?: string[]; // preguntas para hablar del cuento al terminar
+  palabrasNuevas?: string[]; // palabras del tema por encima del nivel, para leerlas antes con un adulto
 }
 
 // Payload que se envía a /api/generate (subconjunto serializable del FormData).

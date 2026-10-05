@@ -237,6 +237,9 @@ export function construirPrompt(
     "las 6 líneas del plan",
     "[PERSONAJES]",
     "descripción física en una línea",
+    ...(aprender && nivelLectura < 3
+      ? ["[PALABRAS NUEVAS]", "hasta 3 palabras del tema que no cumplen el NIVEL, separadas por comas (o «ninguna»)"]
+      : []),
     "[TÍTULO: título del cuento]",
     "[PARTE 1: título corto de capítulo]",
     "planteamiento: quién es, qué desea y el suceso que lo cambia todo",
@@ -270,13 +273,17 @@ export function construirPrompt(
             ? `- El mensaje de fondo es «${valor}». Se demuestra con lo que decide y hace el protagonista en la parte 3, sin sermones`
             : "- Elige un mensaje de fondo que encaje con el tema y que un niño de 6 años entienda (amistad, valentía, empatía, esfuerzo, aprender de los errores...). Se demuestra con lo que decide y hace el protagonista en la parte 3, sin sermones",
           "- Muestra lo que siente el protagonista (ilusión, miedo, duda, alegría) con palabras sencillas",
-          "- Integra 2 o 3 datos reales y verificables sobre el tema, explicados con sencillez",
+          nivelLectura === 1
+            ? "- Integra 1 o 2 datos reales y verificables sobre el tema, dichos con las palabras más sencillas posibles"
+            : "- Integra 2 o 3 datos reales y verificables sobre el tema, explicados con sencillez",
           "- Usa el nombre del protagonista a menudo y, si se indican, los nombres de los acompañantes",
           "- Respeta el número de palabras, las frases cortas y las letras permitidas en NIVEL: es para que el niño lo lea solo",
+          `- Cada parte tiene COMO MÁXIMO ${nivelInfo(nivelLectura).maxPorParte} palabras (cuéntalas antes de seguir): es mejor quedarse corto que pasarse`,
           ...(nivelLectura < 3
             ? [
                 "- Las letras permitidas en NIVEL valen también para el título y los títulos de las partes",
-                "- Comprueba palabra por palabra que cada frase cumple el NIVEL; si una palabra no cumple, cámbiala por otra que sí",
+                "- Comprueba palabra por palabra que cada frase cumple el NIVEL; si una palabra no cumple, cámbiala por otra que sí o, si es del tema y hace falta, ponla en [PALABRAS NUEVAS]",
+                "- El texto del cuento es solo el cuento: nunca dejes dentro comentarios, dudas ni correcciones tuyas",
               ]
             : []),
           "- En [LO QUE APRENDIMOS HOY] escribe 3 frases cortas: los datos aprendidos y el mensaje del cuento",
@@ -338,6 +345,7 @@ export function parsearCuento(texto: string): CuentoParseado {
   let palabras: string[] | undefined;
   let frase: string | undefined;
   let preguntas: string[] | undefined;
+  let palabrasNuevas: string[] | undefined;
 
   // Captura cada bloque [ENCABEZADO] seguido de su contenido hasta el siguiente [.
   const regex = /\[([^\]]+)\]([\s\S]*?)(?=\n?\[[^\]]+\]|$)/g;
@@ -347,7 +355,8 @@ export function parsearCuento(texto: string): CuentoParseado {
     const encabezado = match[1].trim();
     const contenido = match[2].trim();
 
-    if (/lo que aprendimos/i.test(encabezado)) {
+    // Tolerante a variantes ("LO QUE HEMOS APRENDIDO", "LO APRENDIDO"...).
+    if (/^lo (que|aprendido)\b|^aprendimos\b/i.test(encabezado)) {
       aprendimos = contenido;
       continue;
     }
@@ -358,6 +367,16 @@ export function parsearCuento(texto: string): CuentoParseado {
     // [PERSONAJES] describe su aspecto para que las ilustraciones sean coherentes.
     if (/^personajes\b/i.test(encabezado)) {
       personajes = contenido || undefined;
+      continue;
+    }
+
+    // Palabras del tema por encima del nivel, para leerlas antes con un adulto.
+    if (/^palabras nuevas\b/i.test(encabezado)) {
+      palabrasNuevas = contenido
+        .split(/[,\n]+/)
+        .map((p) => p.replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ]/g, "").toLowerCase())
+        .filter((p) => p.length >= 2 && p !== "ninguna")
+        .slice(0, 3);
       continue;
     }
 
@@ -404,5 +423,5 @@ export function parsearCuento(texto: string): CuentoParseado {
     partes.push({ titulo: "El cuento", texto: texto.trim() });
   }
 
-  return { titulo: tituloCuento, personajes, partes, aprendimos, palabras, frase, preguntas };
+  return { titulo: tituloCuento, personajes, partes, aprendimos, palabras, frase, preguntas, palabrasNuevas };
 }

@@ -29,17 +29,24 @@ function sinTildes(p: string): string {
   return p.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
-function palabrasDelTexto(cuento: CuentoParseado, nivel: NivelLectura): string[] {
-  const texto = cuento.partes.map((p) => p.texto).join(" ");
-  const tokens = texto.match(/[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g) ?? [];
-  // Palabras que aparecen con mayúscula en mitad del texto: nombres propios.
-  const propios = new Set(
+const LETRAS_RE = /[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]+/g;
+
+function textoDe(cuento: CuentoParseado): string {
+  return cuento.partes.map((p) => p.texto).join(" ");
+}
+
+// Palabras que aparecen con mayúscula en mitad del texto: nombres propios.
+function nombresPropios(texto: string): Set<string> {
+  return new Set(
     (texto.match(/[^.!?¡¿\s]\s+([A-ZÁÉÍÓÚÑ][a-záéíóúüñ]+)/g) ?? []).map((m) =>
       m.trim().split(/\s+/).pop()!.toLowerCase(),
     ),
   );
+}
+
+function palabrasDelTexto(cuento: CuentoParseado, nivel: NivelLectura, propios: Set<string>): string[] {
   const cuenta = new Map<string, number>();
-  for (const t of tokens) {
+  for (const t of textoDe(cuento).match(LETRAS_RE) ?? []) {
     const p = t.toLowerCase();
     if (p.length < 4 || p.length > 7) continue;
     if (propios.has(p) || COMUNES.has(sinTildes(p))) continue;
@@ -52,14 +59,24 @@ function palabrasDelTexto(cuento: CuentoParseado, nivel: NivelLectura): string[]
     .map(([p]) => p);
 }
 
-function fraseDelTexto(cuento: CuentoParseado): string {
+// ¿Puede escribirla un niño de este nivel? (los nombres propios siempre valen)
+function fraseEnNivel(frase: string, nivel: NivelLectura, propios: Set<string>): boolean {
+  return (frase.match(LETRAS_RE) ?? []).every(
+    (t) => propios.has(t.toLowerCase()) || palabraEnNivel(t, nivel),
+  );
+}
+
+function fraseDelTexto(cuento: CuentoParseado, nivel: NivelLectura, propios: Set<string>): string {
   const frases = cuento.partes
     .flatMap((p) => p.texto.match(/[^.!?]+[.!?]*/g) ?? [])
     .map((f) => f.replace(/[¡¿«»"—–-]/g, "").replace(/\s+/g, " ").trim());
-  const corta = frases.find((f) => {
+  const buena = (f: string, exigirNivel: boolean) => {
     const n = f.split(" ").length;
-    return n >= 3 && n <= 6 && f.length <= MAX_LETRAS_FRASE;
-  });
+    return (
+      n >= 3 && n <= 6 && f.length <= MAX_LETRAS_FRASE && (!exigirNivel || fraseEnNivel(f, nivel, propios))
+    );
+  };
+  const corta = frases.find((f) => buena(f, true)) ?? frases.find((f) => buena(f, false));
   if (corta) return corta;
   const primera = (frases[0] ?? "").split(" ").slice(0, 4).join(" ").replace(/[,.;:!?]+$/, "");
   return primera ? `${primera}.` : "";
@@ -70,9 +87,13 @@ export function materialCaligrafia(
   nivel: NivelLectura = 3,
   letra: LetraInfo | null = null,
 ): MaterialCaligrafia {
-  const palabras = (cuento.palabras ?? []).slice(0, NUM_PALABRAS);
+  const propios = nombresPropios(textoDe(cuento));
+  // Las palabras que propone la IA, solo si son del nivel y no son nombres.
+  const palabras = (cuento.palabras ?? [])
+    .filter((p) => !propios.has(p) && palabraEnNivel(p, nivel))
+    .slice(0, NUM_PALABRAS);
   // Si hay letra protagonista, primero las palabras que la contienen.
-  const candidatas = palabrasDelTexto(cuento, nivel);
+  const candidatas = palabrasDelTexto(cuento, nivel, propios);
   const ordenadas = letra
     ? [
         ...candidatas.filter((p) => palabraConLetra(p, letra)),
@@ -83,7 +104,10 @@ export function materialCaligrafia(
     if (palabras.length >= NUM_PALABRAS) break;
     if (!palabras.includes(p)) palabras.push(p);
   }
+  const fraseIA = cuento.frase ?? "";
   const frase =
-    cuento.frase && cuento.frase.length <= MAX_LETRAS_FRASE + 10 ? cuento.frase : fraseDelTexto(cuento);
+    fraseIA && fraseIA.length <= MAX_LETRAS_FRASE && fraseEnNivel(fraseIA, nivel, propios)
+      ? fraseIA
+      : fraseDelTexto(cuento, nivel, propios);
   return { palabras, frase, letra: letra ? muestraParaEscribir(letra) : undefined };
 }

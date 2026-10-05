@@ -140,8 +140,12 @@ export default function EnQueNosBasamosPage() {
               <em>cla</em>) y los grupos como <em>que</em> o <em>gue</em>, que los estudios con
               niños hispanohablantes señalan como más difíciles <C r="goikoetxea martinez" />.
               Como la IA no siempre cumple estas reglas, un programa revisa cada cuento palabra
-              por palabra y, si encuentra más de tres palabras de un nivel superior, le pide que
-              las cambie.
+              por palabra y, si encuentra más de cinco palabras de un nivel superior, le pide que
+              las cambie. En nuestras pruebas con cuentos reales, entre el 96 % y el 99 % de las
+              palabras quedan dentro del nivel. Si una palabra del tema hace falta y es más
+              difícil (por ejemplo, «dinosaurio»), aparece al principio como{" "}
+              <em>palabra nueva para leer juntos</em>, igual que en los libros para primeros
+              lectores.
               Aun así, cuidamos que la historia tenga sentido y suene natural, porque los textos
               forzados se entienden peor <C r="cheatham price" />. Releer el mismo cuento otro día
               también ayuda a ganar soltura <C r="dfe" />.

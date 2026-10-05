@@ -11,10 +11,13 @@ export interface NivelInfo {
   titulo: string;
   texto: string; // lo que ve el usuario
   prompt: string; // instrucciones de vocabulario y longitud para la IA
+  maxPorParte: number; // tope de palabras por parte (la IA tiende a pasarse)
 }
 
 // Palabras muy frecuentes que se enseñan "de vista" y se permiten en los niveles 1 y 2.
-export const PALABRAS_DE_VISTA = ["con", "que", "por", "para", "muy", "hay", "quiere", "quien", "aqui"];
+export const PALABRAS_DE_VISTA = [
+  "con", "que", "por", "para", "pero", "dice", "muy", "hay", "quiere", "quien", "aqui",
+];
 
 export const NIVELES: NivelInfo[] = [
   {
@@ -29,9 +32,18 @@ export const NIVELES: NivelInfo[] = [
       "Ejemplos válidos: mamá, papá, pato, mono, sol, luna, mesa, dedo, nido, pelota, maleta, pino, isla, sopa, tomate, linda, salta, mete, tapa, nada. " +
       `Además puedes usar estas palabras de vista: ${PALABRAS_DE_VISTA.join(", ")}. ` +
       "Quedan PROHIBIDAS las palabras con r, c, g, b, v, f, j, h, ñ, ll, ch, z, q, k, x, w y las sílabas trabadas (pla, bra...). " +
-      "Los nombres propios de los personajes sí se pueden usar. Si una palabra del tema es imprescindible y no cumple, " +
-      "usa como mucho 1 por parte o cámbiala por otra sencilla (por ejemplo «animal» o «lomo»). " +
-      "Frases de 3 a 6 palabras. Palabras de 1 a 3 sílabas. Entre 30 y 45 palabras por parte (120-180 en total)",
+      "Los nombres propios de los personajes sí se pueden usar. Las palabras del tema imprescindibles que no cumplan el nivel " +
+      "van en [PALABRAS NUEVAS] (como mucho 3, p. ej. «dinosaurio» o «huevo»): esas sí puedes usarlas en el cuento, siempre " +
+      "escritas igual; un adulto las leerá con el niño antes de empezar. Cualquier otra palabra debe cumplir el nivel. " +
+      "OJO con estas palabras tan habituales, que NO valen en este nivel: ella, llama, lleva (ll); mira, ver, ve, " +
+      "amigo, amiga, pequeño, grande, feliz, contento, mueve, sabe, poco, también, sube, nuevo, abre, toca, bien. " +
+      "En su lugar usa el nombre del personaje (en vez de «ella» o «amigo»), adjetivos que sí valen (alto, lindo, listo, " +
+      "solo, todo, malo, sano, mudo) y verbos que sí valen (salta, mete, pide, pisa, toma, nada, sale, pasa, tapa, mima, " +
+      "anda, mide). Si no hay forma de decir algo con estas letras, cambia la frase o quítala. " +
+      "Pero cada frase debe tener sentido y sonar natural en boca de un niño: NUNCA escribas frases raras o forzadas " +
+      "para cumplir el nivel; si algo no se puede decir bien, cuéntalo de otra forma o usa una palabra nueva. " +
+      "Frases de 3 a 6 palabras. Palabras de 1 a 3 sílabas. Entre 25 y 40 palabras por parte (100-160 en total)",
+    maxPorParte: 40,
   },
   {
     id: 2,
@@ -46,8 +58,11 @@ export const NIVELES: NivelInfo[] = [
       "y los grupos que, qui, gue, gui, güe, güi, ce, ci, ge, gi, y las letras k, x, w. " +
       `Excepción: estas palabras de vista sí se pueden usar: ${PALABRAS_DE_VISTA.join(", ")}. ` +
       "Por ejemplo: «dragón», «planeta» o «cielo» NO valen; «mono», «cohete», «luna», «tortuga», «dinosaurio», «volcán» SÍ valen. " +
-      "Los nombres propios de los personajes sí se pueden usar. Si una palabra del tema es imprescindible y no cumple, " +
-      "usa como mucho 1 por parte. Frases de 4 a 8 palabras. Entre 40 y 55 palabras por parte (160-220 en total)",
+      "Los nombres propios de los personajes sí se pueden usar. Las palabras del tema imprescindibles que no cumplan el nivel " +
+      "van en [PALABRAS NUEVAS] (como mucho 3, p. ej. «dinosaurio» o «huevo»): esas sí puedes usarlas en el cuento, siempre " +
+      "escritas igual; un adulto las leerá con el niño antes de empezar. Cualquier otra palabra debe cumplir el nivel. " +
+      "Frases de 4 a 8 palabras. Entre 40 y 55 palabras por parte (160-220 en total)",
+    maxPorParte: 55,
   },
   {
     id: 3,
@@ -58,6 +73,7 @@ export const NIVELES: NivelInfo[] = [
       "NIVEL 3 · YA LEE FRASES (conoce todas las letras y sílabas, incluidas las trabadas). " +
       "Frases claras y cortas (de 4 a 10 palabras), vocabulario sencillo y cotidiano, sin palabras rebuscadas ni muy largas. " +
       "Entre 55 y 75 palabras por parte (220-300 en total)",
+    maxPorParte: 75,
   },
 ];
 
