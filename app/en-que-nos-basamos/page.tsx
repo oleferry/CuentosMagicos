@@ -176,6 +176,31 @@ export default function EnQueNosBasamosPage() {
           </Bloque>
 
           <Bloque
+            emoji="📈"
+            titulo="Sube de nivel a su ritmo"
+            limites={
+              <>
+                la regla de «dos cuentos seguidos» es un criterio práctico nuestro, no una cifra
+                comprobada en estudios; tú decides siempre el nivel.
+              </>
+            }
+          >
+            <p>
+              Los textos ayudan cuando encajan con las letras que el niño ya ha aprendido{" "}
+              <C r="cheatham" />, y avanzar a buen ritmo, sin estancarse, funciona mejor que ir
+              demasiado despacio <C r="sunde" />. Por eso, al terminar cada cuento os preguntamos
+              qué tal lo ha leído. Si los dos últimos cuentos de su nivel le han resultado fáciles,
+              sube al siguiente; si los dos le han costado, vuelve un nivel atrás un tiempo.
+            </p>
+            <p>
+              También os proponemos la letra que le toca: la siguiente que no ha practicado, en el
+              orden habitual del cole, o la misma otra vez si le costó. Cuando ya las ha
+              practicado todas, repasamos la que hace más tiempo que no sale. Todo se guarda solo
+              en vuestro dispositivo.
+            </p>
+          </Bloque>
+
+          <Bloque
             emoji="✏️"
             titulo="La ficha para escribir a mano"
             limites={

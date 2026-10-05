@@ -13,6 +13,7 @@ import { parsearCuento } from "@/lib/prompts";
 import { materialCaligrafia } from "@/lib/caligrafia";
 import { buscarLetra, letraInfo } from "@/lib/letras";
 import CuentoViewer from "@/components/CuentoViewer";
+import ValorarLectura from "@/components/ValorarLectura";
 
 interface Resultado {
   cuento: CuentoParseado;
@@ -178,6 +179,9 @@ export default function CuentoPage() {
           imprenta={imprenta}
           onProgreso={onProgreso}
         />
+        {aprender && resultado.cuentoId && resultado.nombre && (
+          <ValorarLectura nombre={resultado.nombre} cuentoId={resultado.cuentoId} />
+        )}
       </main>
 
       <nav className="no-print fixed bottom-0 left-0 right-0 border-t border-[#F0E6DA] bg-white/95 px-4 py-3 backdrop-blur">

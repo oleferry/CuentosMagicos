@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { FormData } from "@/types/cuento";
 import { formDataInicial } from "@/types/cuento";
 import EmailGate from "@/components/EmailGate";
+import { registrarCuento } from "@/lib/progreso";
 import ProgressBar from "@/components/ui/ProgressBar";
 import StepEdad from "@/components/steps/StepEdad";
 import StepNombre from "@/components/steps/StepNombre";
@@ -112,6 +113,16 @@ export default function Wizard() {
           form: { ...form, foto: null },
         }),
       );
+      // Progreso de lectura (solo en este navegador) para proponer el siguiente cuento.
+      if (form.modoLectura === "aprender") {
+        registrarCuento({
+          nombre: form.nombre,
+          edad: form.edad,
+          nivel: form.nivelLectura,
+          letra: form.letra,
+          cuentoId: data.cuentoId,
+        });
+      }
       router.push("/cuento");
     } catch (err) {
       setError(

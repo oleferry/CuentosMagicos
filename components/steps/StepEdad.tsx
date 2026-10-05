@@ -4,6 +4,7 @@ import type { Edad, FormData, ModoLectura } from "@/types/cuento";
 import { EDADES } from "@/lib/prompts";
 import { NIVELES } from "@/lib/niveles";
 import { letraInfo, letrasHastaNivel } from "@/lib/letras";
+import ProgresoLectores from "@/components/ProgresoLectores";
 
 const MODOS: { id: ModoLectura; emoji: string; titulo: string; texto: string }[] = [
   {
@@ -28,6 +29,8 @@ interface StepProps {
 export default function StepEdad({ form, update }: StepProps) {
   return (
     <div>
+      <ProgresoLectores form={form} update={update} />
+
       <h2 className="mb-1 text-xl font-extrabold text-[#3a2c4d]">
         ¿Cuántos años tiene?
       </h2>

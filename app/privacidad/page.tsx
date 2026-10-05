@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 const RESPONSABLE = "Daniel Paniagua";
 const CONTACTO = "daniel.paniagua.f@gmail.com";
 
-const ACTUALIZADO = "4 de octubre de 2026";
+const ACTUALIZADO = "5 de octubre de 2026";
 
 function Bloque({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
@@ -69,6 +69,12 @@ export default function PrivacidadPage() {
               anotar sus rasgos visibles (pelo, ojos, piel, gafas) y que el dibujo se le
               parezca. No se guarda en nuestros servidores ni en tu navegador.
             </p>
+            <p>
+              <strong>Su progreso de lectura</strong> (nombre, edad, nivel, letras practicadas y
+              cómo le fue cada cuento) se guarda solo en tu navegador, para proponerte el
+              siguiente cuento. No nos llega a nosotros y puedes borrarlo cuando quieras desde el
+              primer paso al crear un cuento.
+            </p>
           </Bloque>
 
           <Bloque titulo="Base legal">
@@ -111,8 +117,9 @@ export default function PrivacidadPage() {
           <Bloque titulo="Cookies">
             <p>
               Solo usamos cookies técnicas imprescindibles: una para recordar tu email y tus
-              cuentos disponibles, y otra para el acceso de familia. No usamos cookies de
-              publicidad ni de analítica.
+              cuentos disponibles, y otra para el acceso de familia. Además, el navegador
+              guarda en este dispositivo el progreso de lectura y la letra elegida (ligada o
+              imprenta). No usamos cookies de publicidad ni de analítica.
             </p>
           </Bloque>
 
