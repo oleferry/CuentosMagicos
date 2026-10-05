@@ -277,13 +277,22 @@ export default function CuentoPage() {
                 ? "📄 Imprimir o guardar PDF (A4, 2 páginas por hoja)"
                 : "⬇️ Guardar PDF para la tablet o el móvil"}
           </button>
-          <button
-            type="button"
-            onClick={() => router.push("/crear")}
-            className="w-full rounded-2xl border-2 border-[#E8E0F0] bg-white px-5 py-3 text-sm font-extrabold text-[#9B5DE5]"
-          >
-            ✨ Crear otro cuento
-          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/crear")}
+              className="flex-1 rounded-2xl border-2 border-[#E8E0F0] bg-white px-4 py-3 text-sm font-extrabold text-[#9B5DE5]"
+            >
+              ✨ Crear otro
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/mis-cuentos")}
+              className="flex-1 rounded-2xl border-2 border-[#E8E0F0] bg-white px-4 py-3 text-sm font-extrabold text-[#9B5DE5]"
+            >
+              📚 Mis cuentos
+            </button>
+          </div>
         </div>
       </nav>
     </div>

@@ -7,6 +7,7 @@ import type { FormData } from "@/types/cuento";
 import { formDataInicial } from "@/types/cuento";
 import EmailGate from "@/components/EmailGate";
 import { registrarCuento } from "@/lib/progreso";
+import { guardarCuento } from "@/lib/biblioteca";
 import ProgressBar from "@/components/ui/ProgressBar";
 import StepEdad from "@/components/steps/StepEdad";
 import StepNombre from "@/components/steps/StepNombre";
@@ -113,6 +114,9 @@ export default function Wizard() {
           form: { ...form, foto: null },
         }),
       );
+      // "Mis cuentos": se guarda en este navegador para poder releerlo.
+      await guardarCuento({ id: data.cuentoId, cuento: data.cuento, form });
+
       // Progreso de lectura (solo en este navegador) para proponer el siguiente cuento.
       if (form.modoLectura === "aprender") {
         registrarCuento({

@@ -11,6 +11,7 @@ import type {
 import LibroImprimible from "@/components/LibroImprimible";
 import LectorPaginas from "@/components/LectorPaginas";
 import { retoBusca } from "@/lib/letras";
+import { guardarImagen, leerCuento } from "@/lib/biblioteca";
 import type { MaterialCaligrafia } from "@/lib/caligrafia";
 
 // Colores que rotan en el borde izquierdo de cada parte.
@@ -60,6 +61,17 @@ export default function CuentoViewer({
     Array(total).fill("cargando"),
   );
   // Se guardan las imágenes para reutilizarlas en la maqueta de impresión.
+  // Ilustraciones ya guardadas en "Mis cuentos" (null mientras se leen).
+  const [guardadas, setGuardadas] = useState<(string | null)[] | null>(null);
+  useEffect(() => {
+    let vivo = true;
+    (cuentoId ? leerCuento(cuentoId) : Promise.resolve(null)).then((c) => {
+      if (vivo) setGuardadas(c?.imagenes ?? []);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [cuentoId]);
   const [imagenes, setImagenes] = useState<(string | null)[]>(() =>
     Array(total).fill(null),
   );
@@ -78,9 +90,11 @@ export default function CuentoViewer({
           next[i] = src;
           return next;
         });
+        // También en "Mis cuentos", para no tener que volver a dibujarla.
+        if (cuentoId) guardarImagen(cuentoId, i, src);
       }
     },
-    [],
+    [cuentoId],
   );
 
   useEffect(() => {
@@ -140,15 +154,21 @@ export default function CuentoViewer({
             {parte.titulo}
           </h3>
 
-          <Ilustracion
-            parte={parte}
-            cuentoId={cuentoId}
-            claveCache={cuentoId ? `cuentomagico:img:${cuentoId}:${i}` : null}
-            personajes={cuento.personajes}
-            nombre={nombre ?? ""}
-            estilo={estilo ?? null}
-            onEstado={(e, src) => setEstadoEn(i, e, src)}
-          />
+          {guardadas === null ? (
+            // Un instante mientras se miran las ilustraciones ya guardadas.
+            <div className="mb-4 h-40 rounded-xl bg-[#F5EEFF]" />
+          ) : (
+            <Ilustracion
+              parte={parte}
+              cuentoId={cuentoId}
+              claveCache={cuentoId ? `cuentomagico:img:${cuentoId}:${i}` : null}
+              inicial={guardadas[i] ?? null}
+              personajes={cuento.personajes}
+              nombre={nombre ?? ""}
+              estilo={estilo ?? null}
+              onEstado={(e, src) => setEstadoEn(i, e, src)}
+            />
+          )}
 
           {parte.texto.split(/\n+/).map((parrafo, j) => (
             <p key={j} className={claseTexto}>
@@ -242,6 +262,7 @@ interface IlustracionProps {
   parte: ParteCuento;
   cuentoId?: string;
   claveCache: string | null; // dónde guardar la imagen para no regenerarla al recargar
+  inicial?: string | null; // ilustración ya guardada en "Mis cuentos"
   personajes?: string; // aspecto de los personajes, igual en todas las ilustraciones
   nombre: string;
   estilo: EstiloId | null;
@@ -270,6 +291,7 @@ function Ilustracion({
   parte,
   cuentoId,
   claveCache,
+  inicial,
   personajes,
   nombre,
   estilo,
@@ -322,7 +344,7 @@ function Ilustracion({
   useEffect(() => {
     if (yaPedida.current) return;
     yaPedida.current = true;
-    const guardada = leerCache(claveCache);
+    const guardada = inicial || leerCache(claveCache);
     if (guardada) {
       setSrc(guardada);
       reportar("ok", guardada);

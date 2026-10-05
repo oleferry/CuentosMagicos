@@ -61,7 +61,8 @@ export default function PrivacidadPage() {
             <p>
               <strong>Los datos del cuento</strong> (nombre del protagonista, gustos, tema)
               se usan solo para generarlo en ese momento y no los guardamos en nuestros
-              servidores. El cuento se conserva únicamente en tu navegador.
+              servidores. El cuento y sus ilustraciones se conservan únicamente en tu navegador,
+              en «Mis cuentos», donde puedes borrarlos cuando quieras.
             </p>
             <p>
               <strong>La foto del protagonista</strong> (opcional y solo disponible con

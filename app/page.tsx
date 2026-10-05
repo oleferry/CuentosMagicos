@@ -72,6 +72,11 @@ export default function Home() {
             {LIMITES.anonimo} cuentos gratis sin registrarte · luego{" "}
             {LIMITES.email} al mes dejando tu email
           </p>
+          <p className="mt-2 text-xs">
+            <Link href="/mis-cuentos" className="font-bold text-[#9B5DE5] underline">
+              📚 Ver mis cuentos guardados
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -127,6 +132,10 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-[#F0E6DA] px-4 py-6 text-center text-xs text-[#7a6b8a]">
+        <Link href="/mis-cuentos" className="font-bold hover:text-[#9B5DE5]">
+          Mis cuentos
+        </Link>
+        <span className="mx-2">·</span>
         <Link href="/en-que-nos-basamos" className="font-bold hover:text-[#9B5DE5]">
           En qué nos basamos
         </Link>
