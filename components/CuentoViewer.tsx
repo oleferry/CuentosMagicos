@@ -9,6 +9,7 @@ import type {
   ParteCuento,
 } from "@/types/cuento";
 import LibroImprimible from "@/components/LibroImprimible";
+import LectorPaginas from "@/components/LectorPaginas";
 import type { MaterialCaligrafia } from "@/lib/caligrafia";
 
 // Colores que rotan en el borde izquierdo de cada parte.
@@ -26,6 +27,9 @@ interface CuentoViewerProps {
   // Juego de buscar las palabras con la letra protagonista (modo aprender).
   busca?: { muestra: string; total: number; palabras: string[] } | null;
   imprenta?: boolean; // ficha de caligrafía en letra de imprenta
+  formato?: "papel" | "pantalla"; // PDF para imprimir o para leer en tablet/móvil
+  lectorAbierto?: boolean; // lectura a pantalla completa, página a página
+  onCerrarLector?: () => void;
   // Informa cuántas ilustraciones han terminado (ok o error) del total.
   onProgreso?: (listas: number, total: number) => void;
 }
@@ -39,6 +43,9 @@ export default function CuentoViewer({
   ficha,
   busca,
   imprenta,
+  formato = "papel",
+  lectorAbierto,
+  onCerrarLector,
   onProgreso,
 }: CuentoViewerProps) {
   const [verPalabras, setVerPalabras] = useState(false);
@@ -82,7 +89,17 @@ export default function CuentoViewer({
 
   return (
     <>
-    {/* En modo aprender, la impresión usa la maqueta de 2 páginas por hoja. */}
+    {lectorAbierto && (
+      <LectorPaginas
+        cuento={cuento}
+        nombre={nombre ?? ""}
+        imagenes={imagenes}
+        aprender={aprender}
+        busca={busca}
+        onCerrar={() => onCerrarLector?.()}
+      />
+    )}
+    {/* En modo aprender, la impresión usa la maqueta de libro (papel o pantalla). */}
     {aprender && (
       <LibroImprimible
         titulo={cuento.titulo}
@@ -90,8 +107,9 @@ export default function CuentoViewer({
         partes={cuento.partes}
         aprendimos={cuento.aprendimos}
         imagenes={imagenes}
-        ficha={ficha}
+        ficha={formato === "papel" ? ficha : null}
         imprenta={imprenta}
+        formato={formato}
         preguntas={cuento.preguntas}
         busca={busca}
       />

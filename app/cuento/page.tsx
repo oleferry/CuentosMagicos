@@ -26,6 +26,9 @@ interface Resultado {
 }
 
 const CLAVE_LETRA = "cuentomagico:letra";
+const CLAVE_FORMATO = "cuentomagico:formato";
+
+type Formato = "papel" | "pantalla";
 
 export default function CuentoPage() {
   const router = useRouter();
@@ -37,13 +40,35 @@ export default function CuentoPage() {
   // Letra del cuento: ligada (la de muchos coles) o imprenta. Se recuerda en este dispositivo.
   const [imprenta, setImprenta] = useState(false);
 
+  // Cómo lo van a leer: en papel (imprimir) o en pantalla (tablet o móvil).
+  const [formato, setFormato] = useState<Formato>("papel");
+  const [lectorAbierto, setLectorAbierto] = useState(false);
+
   useEffect(() => {
     try {
       setImprenta(localStorage.getItem(CLAVE_LETRA) === "imprenta");
+      const guardado = localStorage.getItem(CLAVE_FORMATO);
+      // Sin elección previa: en pantallas táctiles pequeñas, mejor leer en pantalla.
+      setFormato(
+        guardado === "papel" || guardado === "pantalla"
+          ? guardado
+          : window.matchMedia("(pointer: coarse) and (max-width: 1024px)").matches
+            ? "pantalla"
+            : "papel",
+      );
     } catch {
-      // sin almacenamiento: ligada por defecto
+      // sin almacenamiento: ligada y papel por defecto
     }
   }, []);
+
+  const elegirFormato = (f: Formato) => {
+    setFormato(f);
+    try {
+      localStorage.setItem(CLAVE_FORMATO, f);
+    } catch {
+      // no pasa nada si no se puede recordar
+    }
+  };
 
   const elegirLetra = (enImprenta: boolean) => {
     setImprenta(enImprenta);
@@ -144,7 +169,7 @@ export default function CuentoPage() {
       </header>
 
       <main
-        className={`mx-auto w-full max-w-xl px-4 pb-48 pt-6 ${imprenta ? "letra-imprenta" : ""}`}
+        className={`mx-auto w-full max-w-xl px-4 pb-60 pt-6 ${imprenta ? "letra-imprenta" : ""}`}
       >
         <div className="no-print mb-5 flex items-center justify-center gap-2 text-xs font-bold text-[#5a4a6a]">
           Letra:
@@ -177,6 +202,9 @@ export default function CuentoPage() {
           ficha={conFicha ? ficha : null}
           busca={busca}
           imprenta={imprenta}
+          formato={formato}
+          lectorAbierto={lectorAbierto}
+          onCerrarLector={() => setLectorAbierto(false)}
           onProgreso={onProgreso}
         />
         {aprender && resultado.cuentoId && resultado.nombre && (
@@ -186,7 +214,38 @@ export default function CuentoPage() {
 
       <nav className="no-print fixed bottom-0 left-0 right-0 border-t border-[#F0E6DA] bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex w-full max-w-xl flex-col gap-2">
-          {aprender && (
+          <div className="grid grid-cols-2 gap-1 rounded-2xl bg-[#F5EEFF] p-1">
+            {[
+              { id: "papel" as const, texto: "🖨️ Para imprimir" },
+              { id: "pantalla" as const, texto: "📱 Tablet o móvil" },
+            ].map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => elegirFormato(o.id)}
+                aria-pressed={formato === o.id}
+                className="rounded-xl py-2 text-xs font-extrabold transition-colors"
+                style={{
+                  backgroundColor: formato === o.id ? "#ffffff" : "transparent",
+                  color: formato === o.id ? "#9B5DE5" : "#7a6b8a",
+                  boxShadow: formato === o.id ? "0 1px 4px rgba(155,93,229,0.25)" : "none",
+                }}
+              >
+                {o.texto}
+              </button>
+            ))}
+          </div>
+          {formato === "pantalla" && (
+            <button
+              type="button"
+              onClick={() => setLectorAbierto(true)}
+              className="w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white"
+              style={{ background: "linear-gradient(135deg, #9B5DE5, #00BBF9)" }}
+            >
+              📖 Leer página a página
+            </button>
+          )}
+          {formato === "papel" && aprender && (
             <label className="flex cursor-pointer items-center gap-2 px-1 text-xs font-bold text-[#5a4a6a]">
               <input
                 type="checkbox"
@@ -201,12 +260,22 @@ export default function CuentoPage() {
             type="button"
             onClick={() => window.print()}
             disabled={!todasListas}
-            className="w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #9B5DE5, #00BBF9)" }}
+            className={
+              formato === "papel"
+                ? "w-full rounded-2xl px-5 py-3 text-sm font-extrabold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+                : "w-full rounded-2xl border-2 border-[#E8E0F0] bg-white px-5 py-2.5 text-xs font-extrabold text-[#9B5DE5] disabled:cursor-not-allowed disabled:opacity-50"
+            }
+            style={
+              formato === "papel"
+                ? { background: "linear-gradient(135deg, #9B5DE5, #00BBF9)" }
+                : undefined
+            }
           >
-            {todasListas
-              ? "📄 Descargar PDF / Imprimir"
-              : `Preparando ilustraciones... (${listas}/${totalImgs || "…"})`}
+            {!todasListas
+              ? `Preparando ilustraciones... (${listas}/${totalImgs || "…"})`
+              : formato === "papel"
+                ? "📄 Imprimir o guardar PDF (A4, 2 páginas por hoja)"
+                : "⬇️ Guardar PDF para la tablet o el móvil"}
           </button>
           <button
             type="button"

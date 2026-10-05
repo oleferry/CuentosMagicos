@@ -18,6 +18,9 @@ interface LibroImprimibleProps {
   preguntas?: string[]; // para hablar del cuento al terminar
   busca?: { muestra: string; total: number } | null; // juego de buscar la letra protagonista
   imprenta?: boolean; // ficha en letra de imprenta en vez de ligada
+  // "papel": A4 apaisado con 2 páginas por hoja. "pantalla": una página por hoja
+  // A5 vertical, para leer el PDF en una tablet o un móvil.
+  formato?: "papel" | "pantalla";
 }
 
 type Pagina =
@@ -256,21 +259,28 @@ export default function LibroImprimible(props: LibroImprimibleProps) {
     paginas.push({ tipo: "fichaEscribe", numero: paginas.length });
   }
 
-  // Agrupa de dos en dos: cada grupo es una hoja A4 apaisada.
+  // En papel se agrupan de dos en dos (cada grupo es una hoja A4 apaisada);
+  // en pantalla, cada página va sola en una hoja A5 (mismo tamaño útil).
+  const pantalla = props.formato === "pantalla";
+  const porHoja = pantalla ? 1 : 2;
   const hojas: Pagina[][] = [];
-  for (let i = 0; i < paginas.length; i += 2) hojas.push(paginas.slice(i, i + 2));
+  for (let i = 0; i < paginas.length; i += porHoja) hojas.push(paginas.slice(i, i + porHoja));
 
   return (
     <div className="solo-impresion">
-      <style>{"@page { size: A4 landscape; margin: 10mm; }"}</style>
+      <style>
+        {pantalla
+          ? "@page { size: 148mm 210mm; margin: 8mm; }"
+          : "@page { size: A4 landscape; margin: 10mm; }"}
+      </style>
       {hojas.map((hoja, h) => (
-        <div key={h} className="cm-hoja">
+        <div key={h} className={pantalla ? "cm-hoja cm-hoja-pantalla" : "cm-hoja"}>
           {hoja.map((pagina, p) => (
             <div key={p} className="cm-pagina">
               <ContenidoPagina pagina={pagina} props={props} />
             </div>
           ))}
-          {hoja.length === 1 && <div className="cm-pagina" />}
+          {!pantalla && hoja.length === 1 && <div className="cm-pagina" />}
         </div>
       ))}
     </div>
